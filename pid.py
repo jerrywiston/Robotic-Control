@@ -34,7 +34,7 @@ if __name__ == "__main__":
     acc_err = 0.0
     ep = 0
     while(True):
-        print("\rx={}, y={}, v={}, yaw={}, delta={:+.4f}, beta={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.delta,str(np.rad2deg(car.beta))[:5]), end="\t")
+        print("\rx={}, y={}, v={}, yaw={}, delta={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.delta), end="\t")
         # PID Control
         mid, mdist = searchNearest(path,(car.x,car.y))
         p = path[mid]
