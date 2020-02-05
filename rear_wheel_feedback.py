@@ -1,4 +1,4 @@
-import mobile
+import car
 import numpy as np 
 import cv2
 import math
@@ -13,12 +13,11 @@ def searchNearest(path,pos):
             min_id = i
     return min_id, min_dist
 
-Kp = 0.5
-Ki = 0.0
-Kd = 4.0
+kp = 1
+Lfc = 10
 if __name__ == "__main__":
     # Initial Car
-    car = mobile.WheeledMobileRobot()
+    car = car.Car()
     car.x = 50
     car.v = 20
     # Path
@@ -34,23 +33,31 @@ if __name__ == "__main__":
     acc_err = 0.0
     ep = 0
     while(True):
-        print("\rx={}, y={}, v={}, yaw={}, w={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.w), end="\t")
-        # PID Control
+        print("\rx={}, y={}, v={}, yaw={}, delta={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.delta), end="\t")
+        # Pure Pursuit Control
         mid, mdist = searchNearest(path,(car.x,car.y))
         p = path[mid]
-        ang = np.arctan2(p[1]-car.y, p[0]-car.x)
-        last_ep = ep
-        ep = mdist * np.sin(ang)
-        acc_err += ep
+        nid = mid
+        Lf = kp*car.v + Lfc
+        for i in range(nid,len(path)-1):
+            dist = np.sqrt((path[i+1,0]-car.x)**2 + (path[i+1,1]-car.y)**2)
+            if dist > Lf:
+                nid = i
+                break
+        pn = path[nid]
+        
+        alpha = np.arctan2(pn[1]-car.y, pn[0]-car.x) - np.deg2rad(car.yaw)
+        car.delta = np.rad2deg(np.arctan2(2.0*car.l*np.sin(alpha)/Lf, 1))
+        
         if ((car.x-path[-1,0])**2 + (car.y-path[-1,1])**2) < 20**2:
             car.v = 0
-        car.w = Kp*ep + Ki*acc_err + Kd*(ep - last_ep)
-        if car.w > 35:
-            car.w = 35
-        if car.w < -35:
-            car.w = -35
+        if car.delta > 35:
+            car.delta = 35
+        if car.delta < -35:
+            car.delta = -35
         img = img_.copy()
         cv2.circle(img,(int(p[0]),int(p[1])),3,(0.7,0.3,1),2)
+        cv2.circle(img,(int(pn[0]),int(pn[1])),3,(1,0.3,0.7),2)
 
         # Update State & Render
         car.update()

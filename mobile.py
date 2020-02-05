@@ -17,7 +17,7 @@ def drawRectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
     return img
 
 dt = 0.1
-class Car:
+class WheeledMobileRobot:
     def __init__(self):
         # Rear Wheel as Origin Point
         # ============ Pos Parameter ============
@@ -85,7 +85,7 @@ class Car:
 
 # ================= main =================
 if __name__ == "__main__":
-    car = Car()
+    car = WheeledMobileRobot()
     while(True):
         print("\rx={}, y={}, v={}, yaw={}, w={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],str(car.w)[:5]), end="\t")
         img = np.ones((600,600,3))

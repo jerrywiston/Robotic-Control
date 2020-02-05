@@ -13,9 +13,8 @@ def searchNearest(path,pos):
             min_id = i
     return min_id, min_dist
 
-Kp = 0.5
-Ki = 0.0
-Kd = 4.0
+kp = 1
+Lfc = 10
 if __name__ == "__main__":
     # Initial Car
     car = mobile.WheeledMobileRobot()
@@ -31,26 +30,28 @@ if __name__ == "__main__":
     for i in range(len(cx)-1):
         cv2.line(img_, (int(cx[i]), int(cy[i])), (int(cx[i+1]), int(cy[i+1])), (1.0,0.5,0.5), 1)
 
-    acc_err = 0.0
-    ep = 0
     while(True):
         print("\rx={}, y={}, v={}, yaw={}, w={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.w), end="\t")
-        # PID Control
+        # Pure Pursuit Control
         mid, mdist = searchNearest(path,(car.x,car.y))
         p = path[mid]
-        ang = np.arctan2(p[1]-car.y, p[0]-car.x)
-        last_ep = ep
-        ep = mdist * np.sin(ang)
-        acc_err += ep
+        nid = mid
+        Lf = kp*car.v + Lfc
+        for i in range(nid,len(path)-1):
+            dist = np.sqrt((path[i+1,0]-car.x)**2 + (path[i+1,1]-car.y)**2)
+            if dist > Lf:
+                nid = i
+                break
+        pn = path[nid]
+        
+        alpha = np.arctan2(pn[1]-car.y, pn[0]-car.x) - np.deg2rad(car.yaw)
+        car.w = np.rad2deg(2*car.v*np.sin(alpha) / Lf)
+        
         if ((car.x-path[-1,0])**2 + (car.y-path[-1,1])**2) < 20**2:
             car.v = 0
-        car.w = Kp*ep + Ki*acc_err + Kd*(ep - last_ep)
-        if car.w > 35:
-            car.w = 35
-        if car.w < -35:
-            car.w = -35
         img = img_.copy()
         cv2.circle(img,(int(p[0]),int(p[1])),3,(0.7,0.3,1),2)
+        cv2.circle(img,(int(pn[0]),int(pn[1])),3,(1,0.3,0.7),2)
 
         # Update State & Render
         car.update()
