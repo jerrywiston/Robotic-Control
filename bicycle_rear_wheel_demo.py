@@ -1,7 +1,7 @@
 import numpy as np 
 import cv2
 import path_generator
-from wmr_model import KinematicModel
+from bicycle_model import KinematicModel
 
 def searchNearest(path,pos):
     min_dist = 99999999
@@ -13,7 +13,7 @@ def searchNearest(path,pos):
             min_id = i
     return min_id, min_dist
 
-
+kp = 1#5
 if __name__ == "__main__":
     # Initial Car
     car = KinematicModel()
@@ -26,24 +26,19 @@ if __name__ == "__main__":
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
 
     while(True):
-        print("\rx={}, y={}, v={}, yaw={}, w={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.w), end="\t")
+        print("\rx={}, y={}, v={}, yaw={}, delta={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.delta), end="\t")
         img = img_path.copy()
         min_idx, min_dist = searchNearest(path,(car.x,car.y))
         cv2.circle(img,(int(path[min_idx,0]),int(path[min_idx,1])),3,(0.7,0.3,1),2)
 
-        # Pure Pursuit Control
-        kp = 1
-        Lfc = 10
-        Ld = kp*car.v + Lfc
-        target_idx = min_idx
-        for i in range(min_idx,len(path)-1):
-            dist = np.sqrt((path[i+1,0]-car.x)**2 + (path[i+1,1]-car.y)**2)
-            if dist > Ld:
-                target_idx = i
-                break
-        alpha = np.arctan2(path[target_idx,1]-car.y, path[target_idx,0]-car.x) - np.deg2rad(car.yaw)
-        car.w = np.rad2deg(2*car.v*np.sin(alpha) / Ld)
-        cv2.circle(img,(int(path[target_idx,0]),int(path[target_idx,1])),3,(1,0.3,0.7),2)
+        # steering control 
+        KTH = 1.0
+        KE = 0.5
+        theta_e = (path[min_idx,2] - car.yaw) % 360
+        if theta_e > 180:
+            theta_e -= 360
+        omega = car.v * k * np.cos(np.reg2rad(theta_e)) / (1.0 - k * e) - \
+        KTH * abs(v) * th_e - KE * v * math.sin(theta_e) * e / th_e
 
         # Update State & Render
         if ((car.x-path[-1,0])**2 + (car.y-path[-1,1])**2) < 20**2:
@@ -52,6 +47,6 @@ if __name__ == "__main__":
         car.update()
         img = car.render(img)
         cv2.imshow("test", img)
-        k = cv2.waitKey(1)
+        k = cv2.waitKey(10)
         if k == 27:
             break
