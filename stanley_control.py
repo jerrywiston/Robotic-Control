@@ -19,13 +19,7 @@ if __name__ == "__main__":
     car = car.Car()
     car.x = 50
     car.v = 20
-    # Path
-    p1 = 40.0
-    cx = np.arange(0, 500, 1) + 50
-    cy = [math.sin(ix / p1) * ix / 4.0 + 270 for ix in cx]
-    cyaw = [np.rad2deg(np.arctan2(0.4*(math.cos(ix/p1)/p1*ix + math.sin(ix/p1)),1)) for ix in cx]
-    #cy = [270 for ix in cx]
-    #cyaw = [0 for ix in cx]
+    
     path = np.array([(cx[i],cy[i]) for i in range(len(cx))])
     print(path.shape)
     img_ = np.ones((600,600,3))
@@ -50,8 +44,8 @@ if __name__ == "__main__":
         error_front_axle = np.dot([front_x - p[0], front_y - p[1]], front_axle_vec)
         theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, car.v))
         car.delta = theta_e + theta_d
-        kp = 1
-        car.delta = np.rad2deg(np.arctan2(-kp*error_front_axle/(car.v*np.cos(np.deg2rad(-theta_e)))-np.tan(np.deg2rad(-theta_e)),1))
+        #kp = 1
+        #car.delta = np.rad2deg(np.arctan2(-kp*error_front_axle/(car.v*np.cos(np.deg2rad(-theta_e)))-np.tan(np.deg2rad(-theta_e)),1))
         #print(theta_e, theta_d)
 
         if ((car.x-path[-1,0])**2 + (car.y-path[-1,1])**2) < 20**2:
