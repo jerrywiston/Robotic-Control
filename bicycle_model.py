@@ -18,29 +18,42 @@ def drawRectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
 
 dt = 0.1
 class KinematicModel:
-    def __init__(self):
+    def __init__(self,
+            v_range = 50,
+            delta_range = 45,
+            l = 40,     # distance between rear and front wheel
+            d = 10,     # Wheel Distance
+            # Wheel size
+            wu = 10,     
+            wv = 4,
+            # Car size
+            car_w = 28,
+            car_f = 50,
+            car_r = 10
+        ):
         # Rear Wheel as Origin Point
-        # ============ Pos Parameter ============
+        # ============ Initialize State ============
         self.x = 300
         self.y = 300
         self.v = 0
         self.yaw = 0
         self.delta = 0 # steer angle
-        self.v_range = 50
-        self.delta_range = 45
 
         # ============ Car Parameter ============
+        self.v_range = v_range
+        self.delta_range = delta_range
         # Distance from center to wheel
-        self.l = 40
+        self.l = l
         # Wheel Distance
-        self.d = 10
+        self.d = d
         # Wheel size
-        self.wu = 10
-        self.wv = 4
+        self.wu = wu
+        self.wv = wv
         # Car size
-        self.car_w = 28
-        self.car_f = 50
-        self.car_r = 10
+        self.car_w = car_w
+        self.car_f = car_f
+        self.car_r = car_r
+        # Path Record
         self.record = []
     
     def update(self):
@@ -67,7 +80,8 @@ class KinematicModel:
         start = 0 if len(self.record)<rec_max else len(self.record)-rec_max
         # Draw Trajectory
         for i in range(start,len(self.record)-1):
-            cv2.line(img,(int(self.record[i][0]),int(self.record[i][1])), (int(self.record[i+1][0]),int(self.record[i+1][1])), (0,255,0), 1)
+            color = (0/255,97/255,255/255)
+            cv2.line(img,(int(self.record[i][0]),int(self.record[i][1])), (int(self.record[i+1][0]),int(self.record[i+1][1])), color, 1)
 
         ########## Draw Car ##########
         # Car box
