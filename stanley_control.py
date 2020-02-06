@@ -13,17 +13,19 @@ def searchNearest(path,pos):
             min_id = i
     return min_id, min_dist
 
-kp = 1
-Lfc = 10
+kp = 1#5
 if __name__ == "__main__":
     # Initial Car
     car = car.Car()
     car.x = 50
     car.v = 20
     # Path
+    p1 = 40.0
     cx = np.arange(0, 500, 1) + 50
-    cy = [math.sin(ix / 80.0) * ix / 4.0 + 270 for ix in cx]
+    cy = [math.sin(ix / p1) * ix / 4.0 + 270 for ix in cx]
+    cyaw = [np.rad2deg(np.arctan2(0.4*(math.cos(ix/p1)/p1*ix + math.sin(ix/p1)),1)) for ix in cx]
     #cy = [270 for ix in cx]
+    #cyaw = [0 for ix in cx]
     path = np.array([(cx[i],cy[i]) for i in range(len(cx))])
     print(path.shape)
     img_ = np.ones((600,600,3))
@@ -34,35 +36,38 @@ if __name__ == "__main__":
     ep = 0
     while(True):
         print("\rx={}, y={}, v={}, yaw={}, delta={:+.4f}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],car.delta), end="\t")
-        # Pure Pursuit Control
-        mid, mdist = searchNearest(path,(car.x,car.y))
+        # Stanley Control
+        front_x = car.x + car.l*np.cos(np.deg2rad(car.yaw))
+        front_y = car.y + car.l*np.sin(np.deg2rad(car.yaw))
+        mid, mdist = searchNearest(path,(front_x,front_y))
         p = path[mid]
-        nid = mid
-        Lf = kp*car.v + Lfc
-        for i in range(nid,len(path)-1):
-            dist = np.sqrt((path[i+1,0]-car.x)**2 + (path[i+1,1]-car.y)**2)
-            if dist > Lf:
-                nid = i
-                break
-        pn = path[nid]
+        theta_e = (cyaw[mid] - car.yaw) % 360
+        if theta_e > 180:
+            theta_e -= 360
         
-        alpha = np.arctan2(pn[1]-car.y, pn[0]-car.x) - np.deg2rad(car.yaw)
-        car.delta = np.rad2deg(np.arctan2(2.0*car.l*np.sin(alpha)/Lf, 1))
-        
+        front_axle_vec = [np.cos(np.deg2rad(car.yaw) + np.pi / 2),
+                          np.sin(np.deg2rad(car.yaw) + np.pi / 2)]
+        error_front_axle = np.dot([front_x - p[0], front_y - p[1]], front_axle_vec)
+        theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, car.v))
+        car.delta = theta_e + theta_d
+        kp = 1
+        car.delta = np.rad2deg(np.arctan2(-kp*error_front_axle/(car.v*np.cos(np.deg2rad(-theta_e)))-np.tan(np.deg2rad(-theta_e)),1))
+        #print(theta_e, theta_d)
+
         if ((car.x-path[-1,0])**2 + (car.y-path[-1,1])**2) < 20**2:
             car.v = 0
-        if car.delta > 35:
-            car.delta = 35
-        if car.delta < -35:
-            car.delta = -35
+        if car.delta > 45:
+            car.delta = 45
+        if car.delta < -45:
+            car.delta = -45
         img = img_.copy()
         cv2.circle(img,(int(p[0]),int(p[1])),3,(0.7,0.3,1),2)
-        cv2.circle(img,(int(pn[0]),int(pn[1])),3,(1,0.3,0.7),2)
+        cv2.circle(img,(int(front_x),int(front_y)),3,(1,0.3,0.7),2)
 
         # Update State & Render
         car.update()
         img = car.render(img)
         cv2.imshow("test", img)
-        k = cv2.waitKey(1)
+        k = cv2.waitKey(10)
         if k == 27:
             break

@@ -45,10 +45,10 @@ if __name__ == "__main__":
         if ((car.x-path[-1,0])**2 + (car.y-path[-1,1])**2) < 20**2:
             car.v = 0
         car.delta = Kp*ep + Ki*acc_err + Kd*(ep - last_ep)
-        if car.delta > 35:
-            car.delta = 35
-        if car.delta < -35:
-            car.delta = -35
+        if car.delta > 45:
+            car.delta = 45
+        if car.delta < -45:
+            car.delta = -45
         img = img_.copy()
         cv2.circle(img,(int(p[0]),int(p[1])),3,(0.7,0.3,1),2)
 
