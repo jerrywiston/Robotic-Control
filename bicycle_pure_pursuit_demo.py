@@ -4,14 +4,9 @@ import path_generator
 from bicycle_model import KinematicModel
 
 def searchNearest(path,pos):
-    min_dist = 99999999
-    min_id = -1
-    for i in range(path.shape[0]):
-        dist = (pos[0] - path[i,0])**2 + (pos[1] - path[i,1])**2
-        if dist < min_dist:
-            min_dist = dist
-            min_id = i
-    return min_id, min_dist
+    dist = np.hypot(path[:,0]-pos[0], path[:,1]-pos[1])
+    min_id = np.argmin(dist)
+    return min_id, dist[min_id]
 
 if __name__ == "__main__":
     # Initial Car

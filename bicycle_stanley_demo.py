@@ -13,14 +13,14 @@ def searchNearest(path,pos):
             min_id = i
     return min_id, min_dist
 
-kp = 1#5
+kp = 0.5
 if __name__ == "__main__":
     # Initial Car
     car = KinematicModel()
     car.x = 50
     car.v = 20
     # Path
-    path = path_generator.path2()
+    path = path_generator.path2(40)
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         front_axle_vec = [np.cos(np.deg2rad(car.yaw) + np.pi / 2),
                           np.sin(np.deg2rad(car.yaw) + np.pi / 2)]
         error_front_axle = np.dot([front_x - path[min_idx,0], front_y - path[min_idx,1]], front_axle_vec)
-        theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, car.v))
+        theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, car.v/np.cos(np.deg2rad(car.delta))))
         car.delta = theta_e + theta_d
         #kp = 1
         #car.delta = np.rad2deg(np.arctan2(-kp*error_front_axle/(car.v*np.cos(np.deg2rad(-theta_e)))-np.tan(np.deg2rad(-theta_e)),1))
