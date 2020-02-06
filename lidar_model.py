@@ -108,6 +108,21 @@ while(True):
             (0.0,1.0,0.0), 1)
     #img = cv2.flip(img,0)
     img_ = car.render(img_)
+
+    #Collision
+    p1,p2,p3,p4 = car.car_box
+    l1 = Bresenham(p1[0], p2[0], p1[1], p2[1])
+    l2 = Bresenham(p2[0], p3[0], p2[1], p3[1])
+    l3 = Bresenham(p3[0], p4[0], p3[1], p4[1])
+    l4 = Bresenham(p4[0], p1[0], p4[1], p1[1])
+    check = l1+l2+l3+l4
+    collision = False
+    for pts in check:
+        if m[int(pts[1]),int(pts[0])]<0.5:
+            collision = True
+            car.v = 0
+            break
+
     #cv2.circle(img,(100,200),5,(0.5,0.5,0.5),3)
     cv2.imshow("test",img_)
     k = cv2.waitKey(10)

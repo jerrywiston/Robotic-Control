@@ -89,6 +89,7 @@ class KinematicModel:
         pts2 = rotPos(self.car_f,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
         pts3 = rotPos(-self.car_r,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
         pts4 = rotPos(-self.car_r,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        self.car_box = (pts1.astype(int), pts2.astype(int), pts3.astype(int), pts4.astype(int))
         color = (0,0,0)
         size = 1
         cv2.line(img, tuple(pts1.astype(np.int).tolist()), tuple(pts2.astype(np.int).tolist()), color, size)
