@@ -24,6 +24,7 @@ class KinematicModel:
         self.x = 300
         self.y = 300
         self.v = 0
+        self.a = 0
         self.yaw = 0
         self.w = 0
         self.v_range = 50
@@ -40,8 +41,10 @@ class KinematicModel:
         self.car_f = 20
         self.car_r = 10
         self.record = []
+        self._compute_car_box()
     
     def update(self):
+        self.v += self.a
         # Control Constrain
         if self.v > self.v_range:
             self.v = self.v_range
@@ -58,21 +61,41 @@ class KinematicModel:
         self.yaw += self.w * dt
         self.yaw = self.yaw % 360
         self.record.append((self.x, self.y, self.yaw))
+        self._compute_car_box()
+    
+    def redo(self):
+        self.x -= self.v * np.cos(np.deg2rad(self.yaw)) * dt
+        self.y -= self.v * np.sin(np.deg2rad(self.yaw)) * dt
+        self.yaw -= self.w * dt
+        self.yaw = self.yaw % 360
+        self.record.pop()
+
+    def control(self,a,w):
+        self.a = a
+        self.w = w
+
+    def state_str(self):
+        return "x={:.4f}, y={:.4f}, v={:.4f}, a={:.4f}, yaw={:.4f}, w={:.4f}".format(self.x, self.y, self.v, self.a, self.yaw, self.w)
+
+    def _compute_car_box(self):
+        pts1 = rotPos(self.car_f,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts2 = rotPos(self.car_f,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts3 = rotPos(-self.car_r,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts4 = rotPos(-self.car_r,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        self.car_box = (pts1.astype(int), pts2.astype(int), pts3.astype(int), pts4.astype(int))
 
     def render(self, img=np.ones((600,600,3))):
         ########## Draw History ##########
         rec_max = 1000
         start = 0 if len(self.record)<rec_max else len(self.record)-rec_max
         # Draw Trajectory
+        color = (0/255,97/255,255/255)
         for i in range(start,len(self.record)-1):
-            cv2.line(img,(int(self.record[i][0]),int(self.record[i][1])), (int(self.record[i+1][0]),int(self.record[i+1][1])), (0,255,0), 1)
+            cv2.line(img,(int(self.record[i][0]),int(self.record[i][1])), (int(self.record[i+1][0]),int(self.record[i+1][1])), color, 1)
 
         ########## Draw Car ##########
         # Car box
-        pts1 = rotPos(self.car_f,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
-        pts2 = rotPos(self.car_f,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
-        pts3 = rotPos(-self.car_r,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
-        pts4 = rotPos(-self.car_r,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts1, pts2, pts3, pts4 = self.car_box
         color = (0,0,0)
         size = 1
         cv2.line(img, tuple(pts1.astype(np.int).tolist()), tuple(pts2.astype(np.int).tolist()), color, size)
@@ -105,7 +128,7 @@ if __name__ == "__main__":
         car.update()
         img = car.render(img)
         cv2.imshow("demo", img)
-        k = cv2.waitKey(10)
+        k = cv2.waitKey(1)
         if k == ord("a"):
             car.w += 5
         elif k == ord("d"):

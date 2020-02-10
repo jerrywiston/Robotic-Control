@@ -1,33 +1,7 @@
 import numpy as np
 import cv2
-
-# https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#Python
-def Bresenham(x0, x1, y0, y1):
-    rec = []
-    dx = abs(x1 - x0)
-    dy = abs(y1 - y0)
-    x, y = x0, y0
-    sx = -1 if x0 > x1 else 1
-    sy = -1 if y0 > y1 else 1
-    if dx > dy:
-        err = dx / 2.0
-        while x != x1:
-            rec.append((x, y))
-            err -= dy
-            if err < 0:
-                y += sy
-                err += dx
-            x += sx
-    else:
-        err = dy / 2.0
-        while y != y1:
-            rec.append((x, y))
-            err -= dx
-            if err < 0:
-                x += sx
-                err += dy
-            y += sy
-    return rec
+import numpy as np
+from utils import *
 
 class LidarModel:
     def __init__(self,
@@ -68,35 +42,17 @@ class LidarModel:
                     dist = tmp
         return dist
 
-def EndPoint(pos, bot_param, sensor_data):
-    pts_list = []
-    inter = (bot_param[2] - bot_param[1]) / (bot_param[0]-1)
-    for i in range(bot_param[0]):
-        theta = pos[2] + bot_param[1] + i*inter
-        pts_list.append(
-            [ pos[0]+sensor_data[i]*np.cos(np.deg2rad(theta)),
-              pos[1]+sensor_data[i]*np.sin(np.deg2rad(theta))] )
-    return pts_list
+if __name__ == "__main__":
+    img = cv2.flip(cv2.imread("map.png"),0)
+    img[img>128] = 255
+    img[img<=128] = 0
+    m = np.asarray(img)
+    m = cv2.cvtColor(m, cv2.COLOR_RGB2GRAY)
+    m = m.astype(float) / 255.
+    img = img.astype(float)/255.
 
-img = cv2.flip(cv2.imread("map.png"),0)
-m = np.asarray(img)
-m = cv2.cvtColor(m, cv2.COLOR_RGB2GRAY)
-m = m.astype(float) / 255.
-img = img.astype(float)/255.
-
-lmodel = LidarModel(m)
-
-import bicycle_model
-car = bicycle_model.KinematicModel()
-pos = (100,200,0)
-car.x = 100
-car.y = 200
-car.yaw = 0
-
-while(True):
-    print("\rx={}, y={}, v={}, yaw={}, delta={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],str(car.delta)[:5]), end="\t")
-    car.update()
-    pos = (car.x, car.y, car.yaw)
+    lmodel = LidarModel(m)
+    pos = (100,200,0)
     sdata = lmodel.measure(pos)
     plist = EndPoint(pos, [61,-120,120], sdata)
     img_ = img.copy()
@@ -106,33 +62,7 @@ while(True):
             (int(1*pos[0]), int(1*pos[1])), 
             (int(1*pts[0]), int(1*pts[1])),
             (0.0,1.0,0.0), 1)
-    #img = cv2.flip(img,0)
-    img_ = car.render(img_)
-
-    #Collision
-    p1,p2,p3,p4 = car.car_box
-    l1 = Bresenham(p1[0], p2[0], p1[1], p2[1])
-    l2 = Bresenham(p2[0], p3[0], p2[1], p3[1])
-    l3 = Bresenham(p3[0], p4[0], p3[1], p4[1])
-    l4 = Bresenham(p4[0], p1[0], p4[1], p1[1])
-    check = l1+l2+l3+l4
-    collision = False
-    for pts in check:
-        if m[int(pts[1]),int(pts[0])]<0.5:
-            collision = True
-            car.v = 0
-            break
-
-    #cv2.circle(img,(100,200),5,(0.5,0.5,0.5),3)
+    cv2.circle(img_,(pos[0],pos[1]),5,(0.5,0.5,0.5),3)
+    img_ = cv2.flip(img_,0)
     cv2.imshow("test",img_)
-    k = cv2.waitKey(10)
-    if k == ord("a"):
-        car.delta += 5
-    elif k == ord("d"):
-        car.delta -= 5
-    elif k == ord("w"):
-        car.v += 4
-    elif k == ord("s"):
-        car.v -= 4
-    elif k == 27:
-        break
+    k = cv2.waitKey(0)
