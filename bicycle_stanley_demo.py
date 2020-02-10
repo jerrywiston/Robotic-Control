@@ -30,6 +30,7 @@ if __name__ == "__main__":
         img = img_path.copy()
         front_x = car.x + car.l*np.cos(np.deg2rad(car.yaw))
         front_y = car.y + car.l*np.sin(np.deg2rad(car.yaw))
+        vf = car.v / np.cos(np.deg2rad(car.delta))
         min_idx, min_dist = searchNearest(path,(front_x,front_y))
         cv2.circle(img,(int(front_x),int(front_y)),3,(1,0.3,0.7),2)
         cv2.circle(img,(int(path[min_idx,0]),int(path[min_idx,1])),3,(0.7,0.3,1),2)
@@ -41,7 +42,7 @@ if __name__ == "__main__":
         front_axle_vec = [np.cos(np.deg2rad(car.yaw) + np.pi / 2),
                           np.sin(np.deg2rad(car.yaw) + np.pi / 2)]
         error_front_axle = np.dot([front_x - path[min_idx,0], front_y - path[min_idx,1]], front_axle_vec)
-        theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, car.v/np.cos(np.deg2rad(car.delta))))
+        theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, vf))
         car.delta = theta_e + theta_d
         #kp = 1
         #car.delta = np.rad2deg(np.arctan2(-kp*error_front_axle/(car.v*np.cos(np.deg2rad(-theta_e)))-np.tan(np.deg2rad(-theta_e)),1))
