@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 
 img = cv2.flip(cv2.imread("map.png"),0)
 img[img>128] = 255
@@ -24,18 +23,6 @@ while(True):
         count += 1
         if count >= 200:
             break
-
-X = np.array(sample_pts)
-nbrs = NearestNeighbors(n_neighbors=4, algorithm='ball_tree').fit(X)
-distances, indices = nbrs.kneighbors(X)
-
-for i in range(200):
-    for j in range(1,4):
-        cv2.line(
-            img_, 
-            (int(X[i,0]), int(X[i,1])), 
-            (int(X[indices[i,j],0]), int(X[indices[i,j],1])),
-            (0.0,0.8,0.0), 1)
 
 cv2.circle(img_,(pos[0],pos[1]),5,(0,0,1),3)
 cv2.circle(img_,(target[0],target[1]),5,(0,1,0),3)
