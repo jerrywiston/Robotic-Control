@@ -24,27 +24,20 @@ def nearest_node(ntree, samp_node):
             min_node = n
     return min_node
 
-def steer(from_node, to_node, extend_len, move_len, m):
+def steer(from_node, to_node, extend_len, m):
     vect = np.array(to_node) - np.array(from_node)
     v_len = np.hypot(vect[0], vect[1])
     v_theta = np.arctan2(vect[1], vect[0])
     if extend_len > v_len:
         extend_len = v_len
-    n_expand = int(np.floor(extend_len / move_len))
-    ext_path = {}
-    node = from_node
-    for i in range(n_expand):
-        if node[1]<0 or node[1]>=m.shape[0] or node[0]<0 or node[0]>=m.shape[1] or m[int(node[1]), int(node[0])] < 0.5:
-            break
-        new_node = (node[0]+move_len*np.cos(v_theta), node[1]+move_len*np.sin(v_theta))
-        #new_node = (int(new_node[0]), int(new_node[1]))
-        ext_path[new_node] = node
-        node = new_node
-
-    return ext_path
+    new_node = (from_node[0]+extend_len*np.cos(v_theta), from_node[1]+extend_len*np.sin(v_theta))
+    if new_node[1]<0 or new_node[1]>=m.shape[0] or new_node[0]<0 or new_node[0]>=m.shape[1] or m[int(new_node[1]), int(new_node[0])] < 0.5:
+        return False
+    else:        
+        return new_node
 
 # Config
-img = cv2.flip(cv2.imread("map.png"),0)
+img = cv2.flip(cv2.imread("map2.png"),0)
 img[img>128] = 255
 img[img<=128] = 0
 m = np.asarray(img)
@@ -68,8 +61,11 @@ for it in range(20000):
     #print(ntree)
     samp_node = random_node(goal, m.shape)
     near_node = nearest_node(ntree, samp_node)
-    ext_path = steer(near_node, samp_node, extend_lens, 5, m)
-    ntree.update(ext_path)
+    new_node = steer(near_node, samp_node, extend_lens, m)
+    if new_node is not False:
+        ntree[new_node] = near_node
+    else:
+        continue
     if distance(near_node, goal) < extend_lens:
         goal_node = near_node
         break

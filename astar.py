@@ -75,7 +75,7 @@ class AStar():
         return path
 
 if __name__ == "__main__":
-    img = cv2.flip(cv2.imread("map.png"),0)
+    img = cv2.flip(cv2.imread("map2.png"),0)
     img[img>128] = 255
     img[img<=128] = 0
     m = np.asarray(img)
