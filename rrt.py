@@ -100,6 +100,7 @@ class RRT():
 def pos_int(p):
     return (int(p[0]), int(p[1]))
 
+smooth = True
 if __name__ == "__main__":
     # Config
     img = cv2.flip(cv2.imread("map2.png"),0)
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     img = img.astype(float)/255.
 
     start=(100,200)
-    goal=(375,520)
+    goal=(380,520)
     cv2.circle(img,(start[0],start[1]),5,(0,0,1),3)
     cv2.circle(img,(goal[0],goal[1]),5,(0,1,0),3)
 
@@ -120,8 +121,16 @@ if __name__ == "__main__":
     path = rrt.planning(start, goal, 30, img)
 
     # Extract Path
-    for i in range(len(path)-1):
-        cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (0.5,0.5,1), 3)
+    if not smooth:
+        for i in range(len(path)-1):
+            cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (0.5,0.5,1), 3)
+    else:
+        from bspline import *
+        path_x = np.array([n[0] for n in path])
+        path_y = np.array([n[1] for n in path])
+        px, py = bspline_planning(path_x, path_y, 100)
+        for i in range(len(px)-1):
+            cv2.line(img, (int(px[i]),int(py[i])), (int(px[i+1]),int(py[i+1])), (0.5,0.5,1), 3)
 
     img_ = cv2.flip(img,0)
     cv2.imshow("test",img_)

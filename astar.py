@@ -74,6 +74,7 @@ class AStar():
             p = self.parent[p]
         return path
 
+smooth = True
 if __name__ == "__main__":
     img = cv2.flip(cv2.imread("map2.png"),0)
     img[img>128] = 255
@@ -85,15 +86,26 @@ if __name__ == "__main__":
     img = img.astype(float)/255.
 
     start=(100,200)
-    goal=(375,520)
+    goal=(380,520)
     astar = AStar(m)
     path = astar.planning(start=start, goal=goal, img=img)
     print(path)
 
     cv2.circle(img,(start[0],start[1]),5,(0,0,1),3)
     cv2.circle(img,(goal[0],goal[1]),5,(0,1,0),3)
-    for i in range(len(path)-1):
-        cv2.line(img, path[i], path[i+1], (1,0,0), 1)
+    # Extract Path
+    if not smooth:
+        for i in range(len(path)-1):
+            cv2.line(img, path[i], path[i+1], (1,0,0), 2)
+    else:
+        from bspline import *
+        path_x = np.array([n[0] for n in path])
+        path_y = np.array([n[1] for n in path])
+        px, py = bspline_planning(path_x, path_y, 100)
+        print("BBB", len(px))
+        for i in range(len(px)-1):
+            cv2.line(img, (int(px[i]),int(py[i])), (int(px[i+1]),int(py[i+1])), (1,0,0), 2)
+
     img_ = cv2.flip(img,0)
     cv2.imshow("test",img_)
     k = cv2.waitKey(0)
