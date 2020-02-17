@@ -18,7 +18,7 @@ class AStar():
         d = np.max([np.abs(a[0]-b[0]), np.abs(a[1]-b[1])])
         return d
 
-    def run(self, start=(100,200), goal=(375,520), inter=10, img=None):
+    def planning(self, start=(100,200), goal=(375,520), inter=10, img=None):
         # Initialize 
         self.queue.append(start)
         self.parent[start] = None
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     start=(100,200)
     goal=(375,520)
     astar = AStar(m)
-    path = astar.run(start=start, goal=goal, img=img)
+    path = astar.planning(start=start, goal=goal, img=img)
     print(path)
 
     cv2.circle(img,(start[0],start[1]),5,(0,0,1),3)

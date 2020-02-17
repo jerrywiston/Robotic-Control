@@ -49,6 +49,15 @@ class RRT():
             return False, None
         else:        
             return new_node, self._distance(new_node, from_node)
+    
+    def _near_node(self, node, radius):
+        nlist = []
+        for n in self.ntree:
+            if n == node or self._check_collision(n,node):
+                continue
+            if self._distance(n, node) <= radius:
+                nlist.append(n)
+        return nlist
 
     def planning(self, start, goal, extend_lens, img=None):
         self.ntree = {}
@@ -70,6 +79,20 @@ class RRT():
                 goal_node = near_node
                 break
         
+            # Re-Parent
+            nlist = self._near_node(new_node, 100)
+            for n in nlist:
+                cost = self.cost[n] + self._distance(n, new_node)
+                if cost < self.cost[new_node]:
+                    self.ntree[new_node] = n
+                    self.cost[new_node] = cost
+
+            # Re-Wire
+            for n in nlist:
+                cost = self.cost[new_node] + self._distance(n, new_node)
+                if cost < self.cost[n]:
+                    self.ntree[n] = new_node
+                    self.cost[n] = cost
 
             # Draw
             if img is not None:
@@ -78,8 +101,13 @@ class RRT():
                         continue
                     node = self.ntree[n]
                     cv2.line(img, (int(n[0]), int(n[1])), (int(node[0]), int(node[1])), (1,0,0), 1)
+                # Near Node
+                img_ = img.copy()
+                cv2.circle(img_,pos_int(new_node),5,(0,0.7,1),3)
+                for n in nlist:
+                    cv2.circle(img_,pos_int(n),3,(0,0.5,1),2)
                 # Draw Image
-                img_ = cv2.flip(img,0)
+                img_ = cv2.flip(img_,0)
                 cv2.imshow("test",img_)
                 k = cv2.waitKey(1)
                 if k == 27:
