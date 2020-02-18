@@ -48,3 +48,4 @@ def searchNearest(path,pos):
             min_dist = dist
             min_id = i
     return min_id, min_dist
+    
