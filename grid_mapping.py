@@ -46,15 +46,13 @@ class GridMap:
             idx += 1
         return map_prob
 
-    def GridMapLine(self, x0, x1, y0, y1):
+    def GridMapLine(self, x0, x1, y0, y1, max_dist=99999):
         # Scale the position
         x0, x1 = int(round(x0/self.gsize)), int(round(x1/self.gsize))
         y0, y1 = int(round(y0/self.gsize)), int(round(y1/self.gsize))
 
         rec = Bresenham(x0, x1, y0, y1)
         for i in range(len(rec)):
-            p = self.GetGridProb(rec[i])
-
             if i < len(rec)-2:
                 change = self.map_param[1]
             else:
@@ -88,7 +86,8 @@ class GridMap:
                 int(bot_pos[0]), 
                 int(bot_pos[0]+sensor_data[i]*np.cos(np.deg2rad(theta))),
                 int(bot_pos[1]),
-                int(bot_pos[1]+sensor_data[i]*np.sin(np.deg2rad(theta)))
+                int(bot_pos[1]+sensor_data[i]*np.sin(np.deg2rad(theta))),
+                max_dist = bot_param[3]
             )
 
     def AdaptiveGetMap(self):
@@ -115,8 +114,8 @@ if __name__ == "__main__":
 
     print(sdata)
     print(len(sdata))
-    gmap = GridMap([0.9, 0.7, 5.0, -5.0])
-    gmap.SensorMapping(pos, [61,-120,120,300], sdata)
+    gmap = GridMap([-0.9, 0.7, 5.0, -5.0])
+    gmap.SensorMapping(pos, [61,-120,120,250], sdata)
     mmm = gmap.AdaptiveGetMap()
     mmm_ = cv2.flip(mmm,0)
     cv2.imshow("mmm", mmm_)
