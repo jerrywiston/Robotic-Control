@@ -34,6 +34,7 @@ rrt = RRTStar(m_dilate)
 gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=3)
 
 from bspline import *
+from cubic_spline import *
 def interpo(way_points):
     global path
     if len(way_points) > 3:
@@ -41,6 +42,7 @@ def interpo(way_points):
         path_y = np.array([n[1] for n in way_points])
         px, py = bspline_planning(path_x, path_y, 100)
         path = np.array([(px[i],py[i]) for i in range(len(px))])
+        #path = np.array(cubic_spline(way_points))
     else:
         path = []
         for j in range(len(way_points)-1):
