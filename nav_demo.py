@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from utils import *
 from rrt_star import RRTStar
+from astar import AStar
 
 nav_pos = None
 path = None
@@ -31,6 +32,7 @@ car.y = 200
 car.yaw = 0
         
 rrt = RRTStar(m_dilate)
+astar = AStar(m_dilate)
 gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=3)
 
 from bspline import *
@@ -38,11 +40,11 @@ from cubic_spline import *
 def interpo(way_points):
     global path
     if len(way_points) > 3:
-        path_x = np.array([n[0] for n in way_points])
-        path_y = np.array([n[1] for n in way_points])
-        px, py = bspline_planning(path_x, path_y, 100)
-        path = np.array([(px[i],py[i]) for i in range(len(px))])
-        #path = np.array(cubic_spline(way_points))
+        #path_x = np.array([n[0] for n in way_points])
+        #path_y = np.array([n[1] for n in way_points])
+        #px, py = bspline_planning(path_x, path_y, 100)
+        #path = np.array([(px[i],py[i]) for i in range(len(px))])
+        path = np.array(cubic_spline_2d(way_points))
     else:
         path = []
         for j in range(len(way_points)-1):
@@ -60,6 +62,7 @@ def mouse_click(event, x, y, flags, param):
         nav_pos_new = (x, m.shape[0]-y)
         if m_dilate[nav_pos_new[1], nav_pos_new[0]] > 0.5:
             way_points = rrt.planning((pos[0],pos[1]), nav_pos_new, 20)
+            #way_points = astar.planning(pos_int((pos[0],pos[1])), pos_int(nav_pos_new))
             if len(way_points) > 0:
                 nav_pos = nav_pos_new
                 interpo(way_points)
@@ -128,6 +131,7 @@ while(True):
         collision_count += 1
         if collision_count > 10:
             way_points = rrt.planning((pos[0],pos[1]), nav_pos, 20)
+            #way_points = astar.planning(pos_int((pos[0],pos[1])), pos_int(nav_pos))
             interpo(way_points)
             collision_count = 0
 
@@ -152,6 +156,17 @@ while(True):
     
     cv2.imshow("test",img_)
     k = cv2.waitKey(1)
+    if k == ord("r"):
+        car.x = 100
+        car.y = 200
+        car.yaw = 0
+        car.a = 0
+        car.v = 0
+        car.record = []
+        nav_pos = None
+        path = None
+        collision_count = 0
+        print("Reset!!")
     if k == 27:
         print()
         break

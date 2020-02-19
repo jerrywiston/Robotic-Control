@@ -20,6 +20,7 @@ class AStar():
 
     def planning(self, start=(100,200), goal=(375,520), inter=10, img=None):
         # Initialize 
+        self.initialize()
         self.queue.append(start)
         self.parent[start] = None
         self.h[start] = 0
@@ -66,12 +67,13 @@ class AStar():
         
         # Extract path
         path = []
-        p = astar.goal_node
+        p = self.goal_node
         while(True):
             path.insert(0,p)
             if self.parent[p] == None:
                 break
             p = self.parent[p]
+        path.append(goal)
         return path
 
 smooth = True

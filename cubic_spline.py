@@ -4,11 +4,9 @@ import cv2
 def pos_int(p):
     return (int(p[0]), int(p[1]))
 
-def cubic_spline(path):
-    size = len(path)
-    h = [path[i+1][0]-path[i][0] for i in range(size-1)]
-    y = [p[1] for p in path]
-
+def cubic_spline(x,y):
+    size = len(y)
+    h = [x[i+1]-x[i] for i in range(len(x)-1)]
     A = np.zeros((size, size), dtype=np.float)
     for i in range(size):
         if i==0:
@@ -40,20 +38,36 @@ def cubic_spline(path):
     c = [m[i]/2 for i in range(size-1)]
     d = [(m[i+1]-m[i])/(6*h[i]) for i in range(size-1)]
 
-    path_smooth = []
+    y_smooth = []
     in_size = 5
     for i in range(size-1):
         for j in range(in_size):
-            px = path[i][0] + j*(path[i+1][0]-path[i][0])/(in_size+1)
-            py = a[i] + b[i]*(px-path[i][0]) + c[i]*(px-path[i][0])**2 + d[i]*(px-path[i][0])**3
-            path_smooth.append((px,py))
-    path_smooth.append(path[-1])
+            x_inter = x[i] + j*(x[i+1]-x[i])/(in_size+1)
+            y_inter = a[i] + b[i]*(x_inter-x[i]) + c[i]*(x_inter-x[i])**2 + d[i]*(x_inter-x[i])**3
+            y_smooth.append(y_inter)
+    y_smooth.append(y[-1])
+    return y_smooth
+
+def cubic_spline_2d(path):
+    x = [path[i][0] for i in range(len(path))]
+    y = [path[i][1] for i in range(len(path))]
+    x_diff = [path[i+1][0]-path[i][0] for i in range(len(path)-1)]
+    y_diff = [path[i+1][1]-path[i][1] for i in range(len(path)-1)]
+    dist = np.hypot(np.array(x_diff),np.array(y_diff))
+    dist_cum = np.cumsum(dist).tolist()
+    dist_cum.insert(0,0)
+    #print(dist, dist_cum)
+
+    x_smooth = cubic_spline(dist_cum,x)
+    y_smooth = cubic_spline(dist_cum,y)
+    path_smooth = [(x_smooth[i], y_smooth[i]) for i in range(len(x_smooth))]
     #print(path_smooth)
     return path_smooth
 
 if __name__ == "__main__":
-    path = [(20,30), (40,100), (80,120), (160,60)]
-    path_smooth = cubic_spline(path)
+    path = [(20,30), (21,100), (80,120), (160,60)]
+    path_smooth = cubic_spline_2d(path)
+
     img = np.ones((200,200,3), dtype=np.float)
     for p in path:
         cv2.circle(img, p, 3, (0.5,0.5,0.5), 2)
@@ -64,3 +78,5 @@ if __name__ == "__main__":
     img = cv2.flip(img,0)
     cv2.imshow("test", img)
     cv2.waitKey(0)
+    
+    
