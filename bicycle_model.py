@@ -20,6 +20,7 @@ dt = 0.1
 class KinematicModel:
     def __init__(self,
             v_range = 50,
+            a_range = 5,
             delta_range = 45,
             l = 40,     # distance between rear and front wheel
             d = 10,     # Wheel Distance
@@ -41,8 +42,11 @@ class KinematicModel:
         self.delta = 0 # steer angle
 
         # ============ Car Parameter ============
-        self.v_range = v_range
+        # Control Constrain
+        self.a_range = a_range
         self.delta_range = delta_range
+        # Speed Constrain
+        self.v_range = v_range
         # Distance from center to wheel
         self.l = l
         # Wheel Distance
@@ -60,17 +64,12 @@ class KinematicModel:
     
     def update(self):
         self.v = self.v + self.a
-        # Control Constrain
+        # Speed Constrain
         if self.v > self.v_range:
             self.v = self.v_range
         elif self.v < -self.v_range:
             self.v = -self.v_range
-        if self.delta > self.delta_range:
-            self.delta = self.delta_range
-        elif self.delta < -self.delta_range:
-            self.delta = -self.delta_range
 
-        # Motion
         self.x += self.v * np.cos(np.deg2rad(self.yaw)) * dt
         self.y += self.v * np.sin(np.deg2rad(self.yaw)) * dt
         self.yaw += np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * dt) 
@@ -89,6 +88,16 @@ class KinematicModel:
     def control(self,a,delta):
         self.a = a
         self.delta = delta
+
+        # Control Constrain
+        if self.a > self.a_range:
+            self.a = self.a_range
+        elif self.a < -self.a_range:
+            self.a = -self.a_range
+        if self.delta > self.delta_range:
+            self.delta = self.delta_range
+        elif self.delta < -self.delta_range:
+            self.delta = -self.delta_range
 
     def state_str(self):
         return "x={:.4f}, y={:.4f}, v={:.4f}, a={:.4f}, yaw={:.4f}, delta={:.4f}".format(self.x, self.y, self.v, self.a, self.yaw, self.delta)

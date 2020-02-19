@@ -66,7 +66,7 @@ class RRTStar():
         self.cost[start] = 0
         goal_node = None
         for it in range(20000):
-            print("\r", it, len(self.ntree), end="")
+            #print("\r", it, len(self.ntree), end="")
             samp_node = self._random_node(goal, self.map.shape)
             near_node = self._nearest_node(samp_node)
             new_node, cost = self._steer(near_node, samp_node, extend_lens)
@@ -117,9 +117,9 @@ class RRTStar():
         path = []
         n = goal_node
         while(True):
-            path.insert(0,n)
-            if self.ntree[n] is None:
+            if n is None:
                 break
+            path.insert(0,n)
             node = self.ntree[n]
             n = self.ntree[n] 
         path.append(goal)
