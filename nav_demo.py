@@ -107,7 +107,7 @@ while(True):
 
         # Pure Pursuit Control
         min_idx, min_dist = searchNearest(path,(car.x,car.y))
-        kp = 1
+        kp = 0.6
         Lfc = 10
         Ld = kp*car.v + Lfc
         target_idx = min_idx
