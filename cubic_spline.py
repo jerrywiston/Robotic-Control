@@ -4,7 +4,7 @@ import cv2
 def pos_int(p):
     return (int(p[0]), int(p[1]))
 
-def cubic_spline(x,y):
+def cubic_spline(x,y,interval=2):
     size = len(y)
     h = [x[i+1]-x[i] for i in range(len(x)-1)]
     A = np.zeros((size, size), dtype=np.float)
@@ -39,16 +39,20 @@ def cubic_spline(x,y):
     d = [(m[i+1]-m[i])/(6*h[i]) for i in range(size-1)]
 
     y_smooth = []
-    in_size = 5
-    for i in range(size-1):
-        for j in range(in_size):
-            x_inter = x[i] + j*(x[i+1]-x[i])/(in_size+1)
-            y_inter = a[i] + b[i]*(x_inter-x[i]) + c[i]*(x_inter-x[i])**2 + d[i]*(x_inter-x[i])**3
-            y_smooth.append(y_inter)
+    i = 0
+    x_inter = x[0]
+    while(True):
+        if x_inter > x[-1]:
+            break
+        if x_inter > x[i+1]:
+            i += 1 
+        y_inter = a[i] + b[i]*(x_inter-x[i]) + c[i]*(x_inter-x[i])**2 + d[i]*(x_inter-x[i])**3
+        y_smooth.append(y_inter)
+        x_inter += interval
     y_smooth.append(y[-1])
     return y_smooth
 
-def cubic_spline_2d(path):
+def cubic_spline_2d(path, interval=2):
     x = [path[i][0] for i in range(len(path))]
     y = [path[i][1] for i in range(len(path))]
     x_diff = [path[i+1][0]-path[i][0] for i in range(len(path)-1)]
@@ -58,8 +62,8 @@ def cubic_spline_2d(path):
     dist_cum.insert(0,0)
     #print(dist, dist_cum)
 
-    x_smooth = cubic_spline(dist_cum,x)
-    y_smooth = cubic_spline(dist_cum,y)
+    x_smooth = cubic_spline(dist_cum,x,interval)
+    y_smooth = cubic_spline(dist_cum,y,interval)
     path_smooth = [(x_smooth[i], y_smooth[i]) for i in range(len(x_smooth))]
     #print(path_smooth)
     return path_smooth
