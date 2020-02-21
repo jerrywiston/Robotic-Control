@@ -38,19 +38,26 @@ def cubic_spline(x,y,interval=2):
     c = [m[i]/2 for i in range(size-1)]
     d = [(m[i+1]-m[i])/(6*h[i]) for i in range(size-1)]
 
-    y_smooth = []
+    y_list = []
+    dy_list = []
+    ddy_list = []
     i = 0
-    x_inter = x[0]
+    x_ = x[0]
     while(True):
-        if x_inter > x[-1]:
-            break
-        if x_inter > x[i+1]:
+        if x_ >= x[-1]:
+            x_ = x[-1]
+        elif x_ > x[i+1]:
             i += 1 
-        y_inter = a[i] + b[i]*(x_inter-x[i]) + c[i]*(x_inter-x[i])**2 + d[i]*(x_inter-x[i])**3
-        y_smooth.append(y_inter)
-        x_inter += interval
-    y_smooth.append(y[-1])
-    return y_smooth
+        y_ = a[i] + b[i]*(x_-x[i]) + c[i]*(x_-x[i])**2 + d[i]*(x_-x[i])**3
+        dy = b[i] + 2.0*c[i]*(x_-x[i]) + 3.0*d[i]*(x_-x[i])**2
+        ddy = 2.0*c[i] + 6.0*d[i]*(x_-x[i])
+        y_list.append(y_)
+        dy_list.append(dy)
+        ddy_list.append(ddy)
+        if x_ == x[-1]:
+            break
+        x_ += interval
+    return y_list, dy_list, ddy_list
 
 def cubic_spline_2d(path, interval=2):
     x = [path[i][0] for i in range(len(path))]
@@ -62,14 +69,18 @@ def cubic_spline_2d(path, interval=2):
     dist_cum.insert(0,0)
     #print(dist, dist_cum)
 
-    x_smooth = cubic_spline(dist_cum,x,interval)
-    y_smooth = cubic_spline(dist_cum,y,interval)
-    path_smooth = [(x_smooth[i], y_smooth[i]) for i in range(len(x_smooth))]
+    x_list, dx_list, ddx_list = cubic_spline(dist_cum,x,interval)
+    y_list, dy_list, ddy_list = cubic_spline(dist_cum,y,interval)
+    dx, ddx, dy, ddy = np.array(dx_list), np.array(ddx_list), np.array(dy_list), np.array(ddy_list)
+    yaw_list = np.rad2deg(np.arctan2(dy,dx))
+    curv_list = (ddy * dx - ddx * dy) / ((dx ** 2 + dy ** 2)**(3 / 2))
+    path_smooth = [(x_list[i], y_list[i], yaw_list[i], curv_list[i]) for i in range(len(x_list))]
+    
     #print(path_smooth)
     return path_smooth
 
 if __name__ == "__main__":
-    path = [(20,30), (21,100), (80,120), (160,60)]
+    path = [(20,50), (40,100), (80,120), (160,60)]
     path_smooth = cubic_spline_2d(path)
 
     img = np.ones((200,200,3), dtype=np.float)

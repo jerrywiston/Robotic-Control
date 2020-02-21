@@ -101,7 +101,7 @@ while(True):
         cv2.circle(img_,nav_pos,5,(0.5,0.5,1.0),3)
     
     if path is not None and not collision:
-        for i in range(len(way_points)-1):
+        for i in range(len(way_points)):
             cv2.circle(img_, pos_int(way_points[i]), 3, (1.0,0.4,0.4), 1)
         for i in range(len(path)-1):
             #cv2.circle(img_, pos_int(path[i]), 2, (1.0,0.4,0.4), 1)
@@ -113,7 +113,7 @@ while(True):
         next_a = 0.2*(target_v - car.v)
 
         # Pure Pursuit Control
-        from bicycle_pure_pursuit_demo import pure_pursuit
+        from bicycle_pure_pursuit import pure_pursuit
         next_delta, target = pure_pursuit((car.x,car.y,car.yaw),car.v,car.l,path,kp=0.7,Lfc=10)
         cv2.circle(img_,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2)
         car.control(next_a, next_delta)
