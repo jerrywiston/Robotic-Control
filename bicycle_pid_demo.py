@@ -40,7 +40,7 @@ if __name__ == "__main__":
         target_v = 20 if end_dist > 10 else 0
         next_a = 0.1*(target_v - car.v)
 
-        # PID Leteral Control
+        # PID Lateral Control
         Kp = 3
         Ki = 0
         Kd = 30

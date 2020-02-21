@@ -50,7 +50,7 @@ if __name__ == "__main__":
         target_v = 20 if end_dist > 20 else 0
         next_a = 0.1*(target_v - car.v)
 
-        # Pure Pursuit Leteral Control
+        # Pure Pursuit Lateral Control
         next_delta, target = pure_pursuit((car.x,car.y,car.yaw), car.v, car.l, path)
         car.control(next_a,next_delta)
         # =====================================================

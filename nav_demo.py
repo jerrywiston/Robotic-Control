@@ -8,6 +8,7 @@ from utils import *
 from rrt_star import RRTStar
 from astar import AStar
 
+# Global Information
 nav_pos = None
 way_points = None
 path = None
@@ -20,7 +21,7 @@ img[img<=128] = 0
 m = np.asarray(img)
 m = cv2.cvtColor(m, cv2.COLOR_RGB2GRAY)
 m = m.astype(float) / 255.
-m_dilate = 1-cv2.dilate(1-m, np.ones((30,30)))
+m_dilate = 1-cv2.dilate(1-m, np.ones((30,30))) # Configuration-Space
 img = img.astype(float)/255.
 
 # Lidar
@@ -36,15 +37,10 @@ rrt = RRTStar(m_dilate)
 astar = AStar(m_dilate)
 gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=3)
 
-from bspline import *
 from cubic_spline import *
 def interpo(way_points):
     global path
     if len(way_points) > 3:
-        #path_x = np.array([n[0] for n in way_points])
-        #path_y = np.array([n[1] for n in way_points])
-        #px, py = bspline_planning(path_x, path_y, 100)
-        #path = np.array([(px[i],py[i]) for i in range(len(px))])
         path = np.array(cubic_spline_2d(way_points, interval=4))
     else:
         path = []
@@ -113,8 +109,11 @@ while(True):
         next_a = 0.2*(target_v - car.v)
 
         # Pure Pursuit Control
-        from bicycle_pure_pursuit import pure_pursuit
-        next_delta, target = pure_pursuit((car.x,car.y,car.yaw),car.v,car.l,path,kp=0.7,Lfc=10)
+        #from bicycle_pure_pursuit import pure_pursuit
+        #next_delta, target = pure_pursuit((car.x,car.y,car.yaw),car.v,car.l,path,kp=0.7,Lfc=10)
+        from bicycle_stanley_demo import stanley
+        next_delta, target = stanley((car.x,car.y,car.yaw),car.delta, car.v,car.l,path)
+        
         cv2.circle(img_,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2)
         car.control(next_a, next_delta)
     

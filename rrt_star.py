@@ -153,12 +153,11 @@ if __name__ == "__main__":
         for i in range(len(path)-1):
             cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (0.5,0.5,1), 3)
     else:
-        from bspline import *
-        path_x = np.array([n[0] for n in path])
-        path_y = np.array([n[1] for n in path])
-        px, py = bspline_planning(path_x, path_y, 100)
-        for i in range(len(px)-1):
-            cv2.line(img, (int(px[i]),int(py[i])), (int(px[i+1]),int(py[i+1])), (0.5,0.5,1), 3)
+        from cubic_spline import *
+        path = np.array(cubic_spline_2d(path, interval=4))
+        for i in range(len(path)-1):
+            #cv2.circle(img_, pos_int(path[i]), 2, (1.0,0.4,0.4), 1)
+            cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (0.5,0.5,1), 3)
 
     img_ = cv2.flip(img,0)
     cv2.imshow("test",img_)
