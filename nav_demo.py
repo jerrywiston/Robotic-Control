@@ -7,6 +7,7 @@ import numpy as np
 from utils import *
 from rrt_star import RRTStar
 from astar import AStar
+from cubic_spline import *
 
 # Global Information
 nav_pos = None
@@ -37,22 +38,6 @@ rrt = RRTStar(m_dilate)
 astar = AStar(m_dilate)
 gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=3)
 
-from cubic_spline import *
-def interpo(way_points):
-    global path
-    if len(way_points) > 3:
-        path = np.array(cubic_spline_2d(way_points, interval=4))
-    else:
-        path = []
-        for j in range(len(way_points)-1):
-            for i in range(10):
-                n1 = way_points[j]
-                n2 = way_points[j+1]
-                n_inter = (n1[0]+i*(n2[0]-n1[0])/10,  n1[1]+i*(n2[1]-n1[1])/10)
-                path.append(n_inter)
-        path.append(way_points[-1])
-        path = np.array(path)  
-
 def mouse_click(event, x, y, flags, param):
     global nav_pos, pos, path, m_dilate, way_points
     if event == cv2.EVENT_LBUTTONUP:
@@ -60,9 +45,9 @@ def mouse_click(event, x, y, flags, param):
         if m_dilate[nav_pos_new[1], nav_pos_new[0]] > 0.5:
             way_points = rrt.planning((pos[0],pos[1]), nav_pos_new, 20)
             #way_points = astar.planning(pos_int((pos[0],pos[1])), pos_int(nav_pos_new),inter=20)
-            if len(way_points) > 0:
+            if len(way_points) > 1:
                 nav_pos = nav_pos_new
-                interpo(way_points)
+                path = np.array(cubic_spline_2d(way_points, interval=4))
 
 def pos_int(p):
     return (int(p[0]), int(p[1]))
@@ -125,7 +110,7 @@ while(True):
         if collision_count > 10:
             way_points = rrt.planning((pos[0],pos[1]), nav_pos, 20)
             #way_points = astar.planning(pos_int((pos[0],pos[1])), pos_int(nav_pos),inter=20)
-            interpo(way_points)
+            path = np.array(cubic_spline_2d(way_points, interval=4))
             collision_count = 0
 
     img_ = car.render(img_)
