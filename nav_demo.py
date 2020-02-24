@@ -1,17 +1,21 @@
-from lidar_model import LidarModel
-#from wmr_model import KinematicModel
-from bicycle_model import KinematicModel
-from grid_map import GridMap
 import cv2
 import numpy as np
+# Simulation Model
+#from wmr_model import KinematicModel
+from bicycle_model import KinematicModel
+from lidar_model import LidarModel
+# Path Planning
+from PathPlanning.rrt_star import RRTStar
+from PathPlanning.astar import AStar
+from PathPlanning.cubic_spline import *
+# Path Tracking
+from PathTracking.bicycle_pid import PidControl
+from PathTracking.bicycle_pure_pursuit import PurePursuitControl
+from PathTracking.bicycle_stanley import StanleyControl
+#from PathTracking.wmr_pure_pursuit import PurePursuitControl
+# Other
+from SLAM.grid_map import GridMap
 from utils import *
-from rrt_star import RRTStar
-from astar import AStar
-from cubic_spline import *
-
-from bicycle_pid import PidControl
-from wmr_pure_pursuit import PurePursuitControl
-from bicycle_stanley import StanleyControl
 
 # Global Information
 nav_pos = None
@@ -20,7 +24,7 @@ path = None
 collision_count = 0
 
 # Read Image
-img = cv2.flip(cv2.imread("map.png"),0)
+img = cv2.flip(cv2.imread("Maps/map.png"),0)
 img[img>128] = 255
 img[img<=128] = 0
 m = np.asarray(img)
@@ -33,9 +37,16 @@ img = img.astype(float)/255.
 lmodel = LidarModel(m)
 #car = KinematicModel()
 car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
-#controller = PidControl()
-#controller = PurePursuitControl()
-controller = StanleyControl()
+control_type = 2
+if control_type == 0:
+    controller = PidControl()
+elif control_type == 1:
+    controller = PurePursuitControl(kp=0.7,Lfc=10)
+elif control_type == 2:
+    controller = StanleyControl(kp=0.5)
+else:
+    controller = PurePursuitControl(kp=0.7,Lfc=10)
+
 pos = (100,200,0)
 car.x = 100
 car.y = 200
@@ -102,10 +113,12 @@ while(True):
         next_a = 0.2*(target_v - car.v)
 
         # Control
+        state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta, "v":car.v, "l":car.l, "dt":car.dt}
+        #state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "dt":car.dt}
         #next_delta, target = controller.feedback((car.x,car.y,car.yaw),Kp=0.03, Ki=0.00005, Kd=0.08)
         #next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.v,car.l,kp=0.7,Lfc=10)
         #next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.v,kp=0.7,Lfc=10)
-        next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.delta, car.v,car.l)
+        next_delta, target = controller.feedback(state)
         
 
         cv2.circle(img_,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2)

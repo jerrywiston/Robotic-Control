@@ -1,12 +1,14 @@
 import numpy as np 
 
-class StanleyControl:
-    def __init__(self):
+class PurePursuitControl:
+    def __init__(self, kp=1, Lfc=10):
         self.path = None
+        self.kp = kp
+        self.Lfc = Lfc
 
     def set_path(self, path):
         self.path = path.copy()
-    
+
     def _search_nearest(self, pos):
         min_dist = 99999999
         min_id = -1
@@ -17,29 +19,37 @@ class StanleyControl:
                 min_id = i
         return min_id, min_dist
 
-    def feedback(self, pos, delta, v, l, kp=0.5):
+    # State: [x, y, yaw, v, l]
+    def feedback(self, state):
+        # Check Path
         if self.path is None:
             print("No path !!")
             return None, None
-        front_x = pos[0] + l*np.cos(np.deg2rad(pos[2]))
-        front_y = pos[1] + l*np.sin(np.deg2rad(pos[2]))
-        vf = v / np.cos(np.deg2rad(delta))
-        min_idx, min_dist = self._search_nearest((front_x,front_y))
-        target = self.path[min_idx]
+        
+        # Extract State 
+        x, y, yaw, v, l = state["x"], state["y"], state["yaw"], state["v"], state["l"]
 
-        theta_e = (target[2] - pos[2]) % 360
-        if theta_e > 180:
-            theta_e -= 360
-        front_axle_vec = [np.cos(np.deg2rad(pos[2]) + np.pi / 2),
-                            np.sin(np.deg2rad(pos[2]) + np.pi / 2)]
-        error_front_axle = np.dot([front_x - target[0], front_y - target[1]], front_axle_vec)
-        theta_d = np.rad2deg(np.arctan2(-kp * error_front_axle, vf))
-        next_delta = theta_e + theta_d
+        # Search Front Target
+        min_idx, min_dist = self._search_nearest((x,y))
+        Ld = self.kp*v + self.Lfc
+        target_idx = min_idx
+        for i in range(min_idx,len(self.path)-1):
+            dist = np.sqrt((self.path[i+1,0]-x)**2 + (self.path[i+1,1]-y)**2)
+            if dist > Ld:
+                target_idx = i
+                break
+        target = self.path[target_idx]
+
+        # Control Algorithm
+        alpha = np.arctan2(target[1]-y, target[0]-x) - np.deg2rad(yaw)
+        next_delta = np.rad2deg(np.arctan2(2.0*l*np.sin(alpha)/Ld, 1))
         return next_delta, target
 
 if __name__ == "__main__":
     import cv2
     import path_generator
+    import sys
+    sys.path.append("../")
     from bicycle_model import KinematicModel
 
     # Path
@@ -47,32 +57,34 @@ if __name__ == "__main__":
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
-    
+
     # Initialize Car
     car = KinematicModel()
     car.init_state((50,300,0))
-    controller = StanleyControl()
+    controller = PurePursuitControl(kp=1, Lfc=10)
     controller.set_path(path)
 
     while(True):
         print("\rState: "+car.state_str(), end="\t")
-
+        # ================= Control Algorithm ================= 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 10 else 0
+        target_v = 20 if end_dist > 20 else 0
         next_a = 0.1*(target_v - car.v)
 
-        # Stanley Lateral Control
-        next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.delta,car.v,car.l)
+        # Pure Pursuit Lateral Control
+        state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l}
+        next_delta, target = controller.feedback(state)
         car.control(next_a, next_delta)
+        # =====================================================
         
-        # Update State & Render
+        # Update & Render
         car.update()
         img = img_path.copy()
         cv2.circle(img,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2) # target points
         img = car.render(img)
         img = cv2.flip(img, 0)
-        cv2.imshow("Stanley Control Test", img)
+        cv2.imshow("Pure-Pursuit Control Test", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
             _init_state(car)

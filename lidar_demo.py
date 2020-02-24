@@ -2,9 +2,10 @@ from lidar_model import LidarModel
 from bicycle_model import KinematicModel
 import cv2
 import numpy as np
+sys.path.append("../Simulation/")
 from utils import *
 
-img = cv2.flip(cv2.imread("map.png"),0)
+img = cv2.flip(cv2.imread("../Maps/map.png"),0)
 img[img>128] = 255
 img[img<=128] = 0
 m = np.asarray(img)
@@ -52,7 +53,7 @@ while(True):
             break
 
     #cv2.circle(img,(100,200),5,(0.5,0.5,0.5),3)
-    cv2.imshow("test",img_)
+    cv2.imshow("Lidar Demo",img_)
     k = cv2.waitKey(1)
     if k == ord("a"):
         car.delta += 5

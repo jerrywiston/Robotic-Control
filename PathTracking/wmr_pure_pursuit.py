@@ -1,8 +1,10 @@
 import numpy as np 
 
 class PurePursuitControl:
-    def __init__(self):
+    def __init__(self, kp=1, Lfc=10):
         self.path = None
+        self.kp = kp
+        self.Lfc = Lfc
 
     def set_path(self, path):
         self.path = path.copy()
@@ -17,26 +19,36 @@ class PurePursuitControl:
                 min_id = i
         return min_id, min_dist
 
-    def feedback(self, pos, v, kp=1, Lfc=10):
+    def feedback(self, state):
+        # Check Path
         if self.path is None:
             print("No path !!")
             return None, None
-        min_idx, min_dist = self._search_nearest(pos)
-        Ld = kp*v + Lfc
+        
+        # Extract State 
+        x, y, yaw, v = state["x"], state["y"], state["yaw"], state["v"]
+
+        # Search Front Target
+        min_idx, min_dist = self._search_nearest((x,y))
+        Ld = self.kp*v + self.Lfc
         target_idx = min_idx
         for i in range(min_idx,len(self.path)-1):
-            dist = np.sqrt((self.path[i+1,0]-pos[0])**2 + (self.path[i+1,1]-pos[1])**2)
+            dist = np.sqrt((self.path[i+1,0]-x)**2 + (self.path[i+1,1]-y)**2)
             if dist > Ld:
                 target_idx = i
                 break
         target = self.path[target_idx]
-        alpha = np.arctan2(target[1]-pos[1], target[0]-pos[0]) - np.deg2rad(pos[2])
+
+        # Control Algorithm
+        alpha = np.arctan2(target[1]-y, target[0]-x) - np.deg2rad(yaw)
         next_w = np.rad2deg(2*v*np.sin(alpha) / Ld)
         return next_w, target
 
 if __name__ == "__main__":
     import cv2
     import path_generator
+    import sys
+    sys.path.append("../")
     from wmr_model import KinematicModel
 
     # Path
@@ -61,7 +73,8 @@ if __name__ == "__main__":
         next_a = 0.1*(target_v - car.v)
 
         # Pure Pursuit Lateral Control
-        next_delta, target = controller.feedback((car.x,car.y,car.yaw), car.v)
+        state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v}
+        next_delta, target = controller.feedback(state)
         car.control(next_a,next_delta)
         # =====================================================
         

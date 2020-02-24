@@ -1,12 +1,14 @@
+import numpy as np
+import cv2
+import sys
+sys.path.append("../")
 from lidar_model import LidarModel
 from bicycle_model import KinematicModel
 from grid_map import GridMap
-import cv2
-import numpy as np
 from utils import *
 
 # Read Image
-img = cv2.flip(cv2.imread("map.png"),0)
+img = cv2.flip(cv2.imread("../Maps/map.png"),0)
 img[img>128] = 255
 img[img<=128] = 0
 m = np.asarray(img)
@@ -66,6 +68,7 @@ while(True):
             break
 
     #cv2.circle(img,(100,200),5,(0.5,0.5,0.5),3)
+    img_ = cv2.flip(img_, 0)
     cv2.imshow("test",img_)
     k = cv2.waitKey(1)
     if k == ord("a"):

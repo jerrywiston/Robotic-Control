@@ -1,6 +1,8 @@
 import numpy as np
-from utils import *
 import cv2
+import sys
+sys.path.append("../")
+from utils import *
 
 class GridMap:
     def __init__(self, map_param, gsize=3.0):
@@ -65,7 +67,7 @@ class GridMap:
 
 if __name__ == "__main__":
     # Read Image
-    img = cv2.flip(cv2.imread("map.png"),0)
+    img = cv2.flip(cv2.imread("../Maps/map.png"),0)
     img[img>128] = 255
     img[img<=128] = 0
     m = np.asarray(img)

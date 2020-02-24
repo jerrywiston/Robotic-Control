@@ -1,8 +1,11 @@
 import numpy as np 
 
 class PidControl:
-    def __init__(self):
+    def __init__(self, kp=0.4, ki=0.0001, kd=0.5):
         self.path = None
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
         self.acc_ep = 0
         self.last_ep = 0
     
@@ -21,23 +24,32 @@ class PidControl:
                 min_id = i
         return min_id, min_dist
     
-    def feedback(self, pos, Kp=3, Ki=0.001, Kd=30):
+    def feedback(self, state):
+        # Check Path
         if self.path is None:
             print("No path !!")
             return None, None
-        min_idx, min_dist = self._search_nearest(pos)
-        ang = np.arctan2(self.path[min_idx,1]-pos[1], self.path[min_idx,0]-pos[0])
+        
+        # Extract State
+        x, y, dt = state["x"], state["y"], state["dt"]
+
+        # Search Nesrest Target
+        min_idx, min_dist = self._search_nearest((x,y))
+        ang = np.arctan2(self.path[min_idx,1]-y, self.path[min_idx,0]-x)
         ep = min_dist * np.sin(ang)
-        self.acc_ep += ep
-        next_delta = Kp*ep + Ki*self.acc_ep + Kd*(ep - self.last_ep)
+        self.acc_ep += dt*ep
+        diff_ep = (ep - self.last_ep) / dt
+        next_delta = self.kp*ep + self.ki*self.acc_ep + self.kd*diff_ep
         self.last_ep = ep
         return next_delta, self.path[min_idx]
 
 if __name__ == "__main__":
     import cv2
     import path_generator
-    from bicycle_model import KinematicModel
-    
+    import sys
+    sys.path.append("../")
+    from wmr_model import KinematicModel
+
     # Path
     path = path_generator.path2()
     img_path = np.ones((600,600,3))
@@ -52,15 +64,16 @@ if __name__ == "__main__":
 
     while(True):
         print("\rState: "+car.state_str(), end="\t")
-        
+
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
         target_v = 20 if end_dist > 10 else 0
         next_a = 0.1*(target_v - car.v)
 
         # PID Lateral Control
-        next_delta, target = controller.feedback((car.x, car.y, car.yaw))
-        car.control(next_a, next_delta)
+        state = {"x":car.x, "y":car.y, "yaw":car.yaw, "dt":car.dt}
+        next_w, target = controller.feedback(state)
+        car.control(next_a, next_w)
         car.update()
 
         # Update State & Render
@@ -68,7 +81,7 @@ if __name__ == "__main__":
         cv2.circle(img,(int(target[0]),int(target[1])),3,(0.7,0.3,1),2)
         img = car.render(img)
         img = cv2.flip(img, 0)
-        cv2.imshow("PID Control Test", img)
+        cv2.imshow("demo", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
             init_state(car)

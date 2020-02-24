@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import sys
+sys.path.append("../Simulation/")
 
 def _rot_pos(x,y,phi_):
     phi = np.deg2rad(phi_)
@@ -16,7 +18,6 @@ def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
     cv2.line(img, tuple(pts2.astype(np.int).tolist()), tuple(pts4.astype(np.int).tolist()), color, size)
     return img
 
-dt = 0.1
 class KinematicModel:
     def __init__(self,
             v_range = 50,
@@ -30,7 +31,8 @@ class KinematicModel:
             # Car size
             car_w = 28,
             car_f = 50,
-            car_r = 10
+            car_r = 10,
+            dt = 0.1
         ):
         # Rear Wheel as Origin Point
         # Initialize State
@@ -54,6 +56,8 @@ class KinematicModel:
         self.car_f = car_f
         self.car_r = car_r
         self._compute_car_box()
+        # Simulation delta time
+        self.dt = dt
     
     def init_state(self,pos):
         self.x = pos[0]
@@ -72,17 +76,17 @@ class KinematicModel:
         elif self.v < -self.v_range:
             self.v = -self.v_range
 
-        self.x += self.v * np.cos(np.deg2rad(self.yaw)) * dt
-        self.y += self.v * np.sin(np.deg2rad(self.yaw)) * dt
-        self.yaw += np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * dt) 
+        self.x += self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
+        self.y += self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
+        self.yaw += np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * self.dt) 
         self.yaw = self.yaw % 360
         self.record.append((self.x, self.y, self.yaw))
         self._compute_car_box()
         
     def redo(self): # For collision simulation
-        self.x -= self.v * np.cos(np.deg2rad(self.yaw)) * dt
-        self.y -= self.v * np.sin(np.deg2rad(self.yaw)) * dt
-        self.yaw -= np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * dt) 
+        self.x -= self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
+        self.y -= self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
+        self.yaw -= np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * self.dt) 
         self.yaw = self.yaw % 360
         self.record.pop()
         self._compute_car_box()

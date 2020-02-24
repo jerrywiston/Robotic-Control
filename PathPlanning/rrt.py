@@ -103,7 +103,7 @@ def pos_int(p):
 smooth = True
 if __name__ == "__main__":
     # Config
-    img = cv2.flip(cv2.imread("map2.png"),0)
+    img = cv2.flip(cv2.imread("../Maps/map2.png"),0)
     img[img>128] = 255
     img[img<=128] = 0
     m = np.asarray(img)
