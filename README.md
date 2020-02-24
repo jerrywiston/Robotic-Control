@@ -2,7 +2,8 @@
 Pytorch implementation of several robotic control algorithm.
 
 ## Requirement
-- python 3.6
+- python 3
+- Numpy
 - OpenCV
 
 ## Demo
