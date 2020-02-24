@@ -32,8 +32,9 @@ while(True):
             (int(1*pos[0]), int(1*pos[1])), 
             (int(1*pts[0]), int(1*pts[1])),
             (0.0,1.0,0.0), 1)
-    #img = cv2.flip(img,0)
+    
     img_ = car.render(img_)
+    img_ = cv2.flip(img_,0)
 
     #Collision
     p1,p2,p3,p4 = car.car_box

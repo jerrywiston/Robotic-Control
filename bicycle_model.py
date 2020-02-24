@@ -1,15 +1,15 @@
 import cv2
 import numpy as np
 
-def rotPos(x,y,phi_):
+def _rot_pos(x,y,phi_):
     phi = np.deg2rad(phi_)
     return np.array((x*np.cos(phi)+y*np.sin(phi), -x*np.sin(phi)+y*np.cos(phi)))
 
-def drawRectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
-    pts1 = rotPos(-u/2,-v/2,phi) + np.array((x,y))
-    pts2 = rotPos(u/2,-v/2,phi) + np.array((x,y))
-    pts3 = rotPos(-u/2,v/2,phi) + np.array((x,y))
-    pts4 = rotPos(u/2,v/2,phi) + np.array((x,y))
+def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
+    pts1 = _rot_pos(-u/2,-v/2,phi) + np.array((x,y))
+    pts2 = _rot_pos(u/2,-v/2,phi) + np.array((x,y))
+    pts3 = _rot_pos(-u/2,v/2,phi) + np.array((x,y))
+    pts4 = _rot_pos(u/2,v/2,phi) + np.array((x,y))
     cv2.line(img, tuple(pts1.astype(np.int).tolist()), tuple(pts2.astype(np.int).tolist()), color, size)
     cv2.line(img, tuple(pts1.astype(np.int).tolist()), tuple(pts3.astype(np.int).tolist()), color, size)
     cv2.line(img, tuple(pts3.astype(np.int).tolist()), tuple(pts4.astype(np.int).tolist()), color, size)
@@ -33,13 +33,8 @@ class KinematicModel:
             car_r = 10
         ):
         # Rear Wheel as Origin Point
-        # ============ Initialize State ============
-        self.x = 300
-        self.y = 300
-        self.v = 0
-        self.a = 0
-        self.yaw = 0
-        self.delta = 0 # steer angle
+        # Initialize State
+        self.init_state((0,0,0))
 
         # ============ Car Parameter ============
         # Control Constrain
@@ -58,10 +53,17 @@ class KinematicModel:
         self.car_w = car_w
         self.car_f = car_f
         self.car_r = car_r
-        # Path Record
-        self.record = []
         self._compute_car_box()
     
+    def init_state(self,pos):
+        self.x = pos[0]
+        self.y = pos[1]
+        self.yaw = pos[2]
+        self.v = 0
+        self.a = 0
+        self.delta = 0
+        self.record = []
+
     def update(self):
         self.v = self.v + self.a
         # Speed Constrain
@@ -77,7 +79,7 @@ class KinematicModel:
         self.record.append((self.x, self.y, self.yaw))
         self._compute_car_box()
         
-    def redo(self):
+    def redo(self): # For collision simulation
         self.x -= self.v * np.cos(np.deg2rad(self.yaw)) * dt
         self.y -= self.v * np.sin(np.deg2rad(self.yaw)) * dt
         self.yaw -= np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * dt) 
@@ -103,10 +105,10 @@ class KinematicModel:
         return "x={:.4f}, y={:.4f}, v={:.4f}, a={:.4f}, yaw={:.4f}, delta={:.4f}".format(self.x, self.y, self.v, self.a, self.yaw, self.delta)
 
     def _compute_car_box(self):
-        pts1 = rotPos(self.car_f,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
-        pts2 = rotPos(self.car_f,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
-        pts3 = rotPos(-self.car_r,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
-        pts4 = rotPos(-self.car_r,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts1 = _rot_pos(self.car_f,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts2 = _rot_pos(self.car_f,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts3 = _rot_pos(-self.car_r,self.car_w/2,-self.yaw) + np.array((self.x,self.y))
+        pts4 = _rot_pos(-self.car_r,-self.car_w/2,-self.yaw) + np.array((self.x,self.y))
         self.car_box = (pts1.astype(int), pts2.astype(int), pts3.astype(int), pts4.astype(int))
 
     def render(self, img=np.ones((600,600,3))):
@@ -127,36 +129,38 @@ class KinematicModel:
         cv2.line(img, tuple(pts3.astype(np.int).tolist()), tuple(pts4.astype(np.int).tolist()), color, size)
         cv2.line(img, tuple(pts2.astype(np.int).tolist()), tuple(pts4.astype(np.int).tolist()), color, size)
         # Car center & direction
-        t1 = rotPos( 6, 0, -self.yaw) + np.array((self.x,self.y))
-        t2 = rotPos( 0, 4, -self.yaw) + np.array((self.x,self.y))
-        t3 = rotPos( 0, -4, -self.yaw) + np.array((self.x,self.y))
+        t1 = _rot_pos( 6, 0, -self.yaw) + np.array((self.x,self.y))
+        t2 = _rot_pos( 0, 4, -self.yaw) + np.array((self.x,self.y))
+        t3 = _rot_pos( 0, -4, -self.yaw) + np.array((self.x,self.y))
         cv2.line(img, (int(self.x),int(self.y)), (int(t1[0]), int(t1[1])), (0,0,1), 2)
         cv2.line(img, (int(t2[0]), int(t2[1])), (int(t3[0]), int(t3[1])), (1,0,0), 2)
         
         ########## Draw Wheels ##########
-        w1 = rotPos( self.l, self.d, -self.yaw) + np.array((self.x,self.y))
-        w2 = rotPos( self.l,-self.d, -self.yaw) + np.array((self.x,self.y))
-        w3 = rotPos( 0, self.d, -self.yaw) + np.array((self.x,self.y))
-        w4 = rotPos( 0,-self.d, -self.yaw) + np.array((self.x,self.y))
+        w1 = _rot_pos( self.l, self.d, -self.yaw) + np.array((self.x,self.y))
+        w2 = _rot_pos( self.l,-self.d, -self.yaw) + np.array((self.x,self.y))
+        w3 = _rot_pos( 0, self.d, -self.yaw) + np.array((self.x,self.y))
+        w4 = _rot_pos( 0,-self.d, -self.yaw) + np.array((self.x,self.y))
         # 4 Wheels
-        img = drawRectangle(img,int(w1[0]),int(w1[1]),self.wu,self.wv,-self.yaw-self.delta)
-        img = drawRectangle(img,int(w2[0]),int(w2[1]),self.wu,self.wv,-self.yaw-self.delta)
-        img = drawRectangle(img,int(w3[0]),int(w3[1]),self.wu,self.wv,-self.yaw)
-        img = drawRectangle(img,int(w4[0]),int(w4[1]),self.wu,self.wv,-self.yaw)
+        img = _draw_rectangle(img,int(w1[0]),int(w1[1]),self.wu,self.wv,-self.yaw-self.delta)
+        img = _draw_rectangle(img,int(w2[0]),int(w2[1]),self.wu,self.wv,-self.yaw-self.delta)
+        img = _draw_rectangle(img,int(w3[0]),int(w3[1]),self.wu,self.wv,-self.yaw)
+        img = _draw_rectangle(img,int(w4[0]),int(w4[1]),self.wu,self.wv,-self.yaw)
         # Axle
         img = cv2.line(img, tuple(w1.astype(np.int).tolist()), tuple(w2.astype(np.int).tolist()), (0,0,0), 1)
         img = cv2.line(img, tuple(w3.astype(np.int).tolist()), tuple(w4.astype(np.int).tolist()), (0,0,0), 1)
-        return cv2.flip(img,0)
+        return img
 
-# ================= main =================
+# ================= test =================
 if __name__ == "__main__":
     car = KinematicModel()
+    car.init_state((300,300,0))
     while(True):
         print("\rState: "+car.state_str(), end="\t")
         img = np.ones((600,600,3))
         car.update()
         img = car.render(img)
-        cv2.imshow("demo", img)
+        img = cv2.flip(img, 0)
+        cv2.imshow("Bicycle Model Test", img)
         k = cv2.waitKey(1)
         if k == ord("a"):
             car.delta += 5

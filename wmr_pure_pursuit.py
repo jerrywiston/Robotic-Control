@@ -17,7 +17,7 @@ class PurePursuitControl:
                 min_id = i
         return min_id, min_dist
 
-    def feedback(self, pos, v, l, kp=1, Lfc=10):
+    def feedback(self, pos, v, kp=1, Lfc=10):
         if self.path is None:
             print("No path !!")
             return None, None
@@ -31,13 +31,13 @@ class PurePursuitControl:
                 break
         target = self.path[target_idx]
         alpha = np.arctan2(target[1]-pos[1], target[0]-pos[0]) - np.deg2rad(pos[2])
-        next_delta = np.rad2deg(np.arctan2(2.0*l*np.sin(alpha)/Ld, 1))
-        return next_delta, target
+        next_w = np.rad2deg(2*v*np.sin(alpha) / Ld)
+        return next_w, target
 
 if __name__ == "__main__":
     import cv2
     import path_generator
-    from bicycle_model import KinematicModel
+    from wmr_model import KinematicModel
 
     # Path
     path = path_generator.path2()
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         next_a = 0.1*(target_v - car.v)
 
         # Pure Pursuit Lateral Control
-        next_delta, target = controller.feedback((car.x,car.y,car.yaw), car.v, car.l)
+        next_delta, target = controller.feedback((car.x,car.y,car.yaw), car.v)
         car.control(next_a,next_delta)
         # =====================================================
         

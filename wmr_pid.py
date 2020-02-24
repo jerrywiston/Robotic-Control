@@ -1,12 +1,19 @@
 import numpy as np 
+import cv2
+import path_generator
+from wmr_model import KinematicModel
 
-class PurePursuitControl:
+class PidControl:
     def __init__(self):
         self.path = None
-
+        self.acc_ep = 0
+        self.last_ep = 0
+    
     def set_path(self, path):
         self.path = path.copy()
-
+        self.acc_ep = 0
+        self.last_ep = 0
+    
     def _search_nearest(self, pos):
         min_dist = 99999999
         min_id = -1
@@ -16,28 +23,23 @@ class PurePursuitControl:
                 min_dist = dist
                 min_id = i
         return min_id, min_dist
-
-    def feedback(self, pos, v, l, kp=1, Lfc=10):
+    
+    def feedback(self, pos, Kp=3, Ki=0.001, Kd=30):
         if self.path is None:
             print("No path !!")
             return None, None
         min_idx, min_dist = self._search_nearest(pos)
-        Ld = kp*v + Lfc
-        target_idx = min_idx
-        for i in range(min_idx,len(self.path)-1):
-            dist = np.sqrt((self.path[i+1,0]-pos[0])**2 + (self.path[i+1,1]-pos[1])**2)
-            if dist > Ld:
-                target_idx = i
-                break
-        target = self.path[target_idx]
-        alpha = np.arctan2(target[1]-pos[1], target[0]-pos[0]) - np.deg2rad(pos[2])
-        next_delta = np.rad2deg(np.arctan2(2.0*l*np.sin(alpha)/Ld, 1))
-        return next_delta, target
+        ang = np.arctan2(self.path[min_idx,1]-pos[1], self.path[min_idx,0]-pos[0])
+        ep = min_dist * np.sin(ang)
+        self.acc_ep += ep
+        next_w = Kp*ep + Ki*self.acc_ep + Kd*(ep - self.last_ep)
+        self.last_ep = ep
+        return next_w, self.path[min_idx]
 
 if __name__ == "__main__":
     import cv2
     import path_generator
-    from bicycle_model import KinematicModel
+    from wmr_model import KinematicModel
 
     # Path
     path = path_generator.path2()
@@ -45,36 +47,34 @@ if __name__ == "__main__":
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
 
-    # Initialize Car
+    # Initial Car
     car = KinematicModel()
     car.init_state((50,300,0))
-    controller = PurePursuitControl()
+    controller = PidControl()
     controller.set_path(path)
 
     while(True):
         print("\rState: "+car.state_str(), end="\t")
 
-        # ================= Control Algorithm ================= 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 20 else 0
+        target_v = 20 if end_dist > 10 else 0
         next_a = 0.1*(target_v - car.v)
 
-        # Pure Pursuit Lateral Control
-        next_delta, target = controller.feedback((car.x,car.y,car.yaw), car.v, car.l)
-        car.control(next_a,next_delta)
-        # =====================================================
-        
-        # Update & Render
+        # PID Control
+        next_w, target = controller.feedback((car.x, car.y, car.yaw))
+        car.control(next_a, next_w)
         car.update()
+
+        # Update State & Render
         img = img_path.copy()
-        cv2.circle(img,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2) # target points
+        cv2.circle(img,(int(target[0]),int(target[1])),3,(0.7,0.3,1),2)
         img = car.render(img)
         img = cv2.flip(img, 0)
-        cv2.imshow("Pure-Pursuit Control Test", img)
+        cv2.imshow("demo", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
-            _init_state(car)
+            init_state(car)
         if k == 27:
             print()
             break

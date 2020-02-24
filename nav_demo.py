@@ -9,6 +9,10 @@ from rrt_star import RRTStar
 from astar import AStar
 from cubic_spline import *
 
+from bicycle_pid import PidControl
+from wmr_pure_pursuit import PurePursuitControl
+from bicycle_stanley import StanleyControl
+
 # Global Information
 nav_pos = None
 way_points = None
@@ -29,6 +33,9 @@ img = img.astype(float)/255.
 lmodel = LidarModel(m)
 #car = KinematicModel()
 car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
+#controller = PidControl()
+#controller = PurePursuitControl()
+controller = StanleyControl()
 pos = (100,200,0)
 car.x = 100
 car.y = 200
@@ -39,7 +46,7 @@ astar = AStar(m_dilate)
 gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=3)
 
 def mouse_click(event, x, y, flags, param):
-    global nav_pos, pos, path, m_dilate, way_points
+    global nav_pos, pos, path, m_dilate, way_points, controller
     if event == cv2.EVENT_LBUTTONUP:
         nav_pos_new = (x, m.shape[0]-y)
         if m_dilate[nav_pos_new[1], nav_pos_new[0]] > 0.5:
@@ -48,6 +55,7 @@ def mouse_click(event, x, y, flags, param):
             if len(way_points) > 1:
                 nav_pos = nav_pos_new
                 path = np.array(cubic_spline_2d(way_points, interval=4))
+                controller.set_path(path)
 
 def pos_int(p):
     return (int(p[0]), int(p[1]))
@@ -93,12 +101,13 @@ while(True):
         target_v = 35 if end_dist > 20 else 0
         next_a = 0.2*(target_v - car.v)
 
-        # Pure Pursuit Control
-        #from bicycle_pure_pursuit import pure_pursuit
-        #next_delta, target = pure_pursuit((car.x,car.y,car.yaw),car.v,car.l,path,kp=0.7,Lfc=10)
-        from bicycle_stanley_demo import stanley
-        next_delta, target = stanley((car.x,car.y,car.yaw),car.delta, car.v,car.l,path)
+        # Control
+        #next_delta, target = controller.feedback((car.x,car.y,car.yaw),Kp=0.03, Ki=0.00005, Kd=0.08)
+        #next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.v,car.l,kp=0.7,Lfc=10)
+        #next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.v,kp=0.7,Lfc=10)
+        next_delta, target = controller.feedback((car.x,car.y,car.yaw),car.delta, car.v,car.l)
         
+
         cv2.circle(img_,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2)
         car.control(next_a, next_delta)
     
@@ -111,9 +120,11 @@ while(True):
             way_points = rrt.planning((pos[0],pos[1]), nav_pos, 20)
             #way_points = astar.planning(pos_int((pos[0],pos[1])), pos_int(nav_pos),inter=20)
             path = np.array(cubic_spline_2d(way_points, interval=4))
+            controller.set_path(path)
             collision_count = 0
 
     img_ = car.render(img_)
+    img_ = cv2.flip(img_, 0)
 
     #Collision
     p1,p2,p3,p4 = car.car_box
