@@ -2,10 +2,9 @@ from lidar_model import LidarModel
 from bicycle_model import KinematicModel
 import cv2
 import numpy as np
-sys.path.append("../Simulation/")
 from utils import *
 
-img = cv2.flip(cv2.imread("../Maps/map.png"),0)
+img = cv2.flip(cv2.imread("Maps/map.png"),0)
 img[img>128] = 255
 img[img<=128] = 0
 m = np.asarray(img)

@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import sys
-sys.path.append("Simulation/")
 from utils import *
 
 class LidarModel:
@@ -44,7 +43,7 @@ class LidarModel:
         return dist
 
 if __name__ == "__main__":
-    img = cv2.flip(cv2.imread("../Maps/map.png"),0)
+    img = cv2.flip(cv2.imread("Maps/map.png"),0)
     img[img>128] = 255
     img[img<=128] = 0
     m = np.asarray(img)
