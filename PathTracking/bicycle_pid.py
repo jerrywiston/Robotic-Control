@@ -58,7 +58,8 @@ if __name__ == "__main__":
 
     # Initial Car
     car = KinematicModel()
-    car.init_state((50,300,0))
+    start = (50,300,0)
+    car.init_state(start)
     controller = PidControl()
     controller.set_path(path)
 
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         cv2.imshow("PID Control Test", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
-            init_state(car)
+            car.init_state(start)
         if k == 27:
             print()
             break

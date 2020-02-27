@@ -1,14 +1,10 @@
 import numpy as np 
 
 class LQRControl:
-    def __init__(self, Q=np.eye(4), R=1*np.eye(1)):
+    def __init__(self, Q=np.eye(4), R=3*np.eye(1)):
         self.path = None
         self.Q = Q
         self.R = R
-        self.Q[0,0] = 1.00
-        self.Q[1,1] = 0.00
-        self.Q[2,2] = 1.00
-        self.Q[3,3] = 0.00
         self.pe = 0
         self.pth_e = 0
 
@@ -27,16 +23,16 @@ class LQRControl:
                 min_id = i
         return min_id, min_dist
 
-    def _solve_DARE(self, A, B, Q, R, max_iter=200, eps=0.05): # Discrete-time Algebra Riccati Equation (DARE)
+    def _solve_DARE(self, A, B, Q, R, max_iter=200, eps=0.01): # Discrete-time Algebra Riccati Equation (DARE)
         P = Q.copy()
         for i in range(max_iter):
             temp = np.linalg.inv(R + B.T @ P @ B)
             Pn = Q + A.T @ P @ A - A.T @ P @ B @ temp @ B.T @ P @ A
-            if np.abs(Pn - P).sum() < eps:
+            if np.abs(Pn - P).max() < eps:
                 break
             P = Pn.copy()
         return P
-    
+
     def _angle_norm(self, theta):
         return (theta + 180) % 360 - 180
 
@@ -56,7 +52,6 @@ class LQRControl:
         
         e = np.sqrt(min_dist)
         th_e = np.deg2rad(self._angle_norm(yaw - target[2]))
-        k = target[3]
 
         # Construct Linear Approximation Model
         A = np.array([  
@@ -85,9 +80,8 @@ class LQRControl:
         
         fb = np.rad2deg((-K @ X)[0, 0])
         fb = self._angle_norm(fb)
-        ff = np.rad2deg(np.arctan2(l*k, 1))
-        next_delta = self._angle_norm( fb)
-        print(e)
+        ff = np.rad2deg(np.arctan2(l*target[3], 1))
+        next_delta = self._angle_norm(fb)
         return next_delta, target
 
 if __name__ == "__main__":
@@ -105,7 +99,8 @@ if __name__ == "__main__":
     
     # Initialize Car
     car = KinematicModel()
-    car.init_state((50,300,0))
+    start = (50,300,0)
+    car.init_state(start)
     controller = LQRControl()
     controller.set_path(path)
 
@@ -114,7 +109,7 @@ if __name__ == "__main__":
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 10 else 0
+        target_v = 10 if end_dist > 10 else 0
         next_a = 0.1*(target_v - car.v)
 
         # Stanley Lateral Control
@@ -128,10 +123,10 @@ if __name__ == "__main__":
         cv2.circle(img,(int(target[0]),int(target[1])),3,(1,0.3,0.7),2) # target points
         img = car.render(img)
         img = cv2.flip(img, 0)
-        cv2.imshow("Stanley Control Test", img)
+        cv2.imshow("LQR Control Test", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
-            _init_state(car)
+            car.init_state(start)
         if k == 27:
             print()
             break

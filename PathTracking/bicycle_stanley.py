@@ -60,7 +60,8 @@ if __name__ == "__main__":
     
     # Initialize Car
     car = KinematicModel()
-    car.init_state((50,300,0))
+    start = (50,300,0)
+    car.init_state(start)
     controller = StanleyControl(kp=0.5)
     controller.set_path(path)
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         cv2.imshow("Stanley Control Test", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
-            _init_state(car)
+            car.init_state(start)
         if k == 27:
             print()
             break
