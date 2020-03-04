@@ -7,7 +7,7 @@ from utils import *
 class GridMap:
     def __init__(self, map_param, gsize=3.0):
         self.map_param = map_param
-        self.map_size = (2000,2000)
+        self.map_size = (1000,1000)
         self.gmap = np.zeros(self.map_size,dtype=np.float)
         self.gsize = gsize
         self.boundary = [9999,-9999,9999,-9999]
@@ -45,6 +45,37 @@ class GridMap:
         y0, y1 = int(y0/self.gsize), int(y1/self.gsize)
 
         rec = Bresenham(x0, x1, y0, y1)
+        change_list1 = []
+        change_list2 = []
+        for i in range(len(rec)):
+            if i < len(rec)-3 or not hit:
+                change_list1.append([rec[i][1],rec[i][0]])
+                #change = self.map_param[0]
+            else:
+                change_list2.append([rec[i][1],rec[i][0]])
+                #change = self.map_param[1]
+
+            #self.gmap[rec[i][1],rec[i][0]] += change
+            if rec[i][0] < self.boundary[0]:
+                self.boundary[0] = rec[i][0]
+            elif rec[i][0] > self.boundary[1]:
+                self.boundary[1] = rec[i][0]
+            if rec[i][1] < self.boundary[2]:
+                self.boundary[2] = rec[i][1]
+            elif rec[i][1] > self.boundary[3]:
+                self.boundary[3] = rec[i][1]
+            
+        c1 = list(np.array(change_list1).T)
+        c2 = list(np.array(change_list2).T)
+        self.gmap[c1] += self.map_param[0]
+        self.gmap[c2] += self.map_param[1]
+
+    def map_lineXX(self, x0, x1, y0, y1, hit):
+        # Scale the position
+        x0, x1 = int(x0/self.gsize), int(x1/self.gsize)
+        y0, y1 = int(y0/self.gsize), int(y1/self.gsize)
+
+        rec = Bresenham(x0, x1, y0, y1)
         for i in range(len(rec)):
             if i < len(rec)-3 or not hit:
                 change = self.map_param[0]
@@ -65,6 +96,7 @@ class GridMap:
                 self.gmap[rec[i][1],rec[i][0]] = self.map_param[2]
             if self.gmap[rec[i][1],rec[i][0]] < self.map_param[3]:
                 self.gmap[rec[i][1],rec[i][0]] = self.map_param[3]
+            
     
     def update_map(self, bot_pos, bot_param, sensor_data):
         inter = (bot_param[2] - bot_param[1]) / (bot_param[0]-1)

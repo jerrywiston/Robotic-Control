@@ -55,13 +55,13 @@ car.yaw = 0
         
 rrt = RRTStar(m_dilate)
 astar = AStar(m_dilate)
-gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=3)
+gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=6)
 # First Mapping
 pos = (car.x, car.y, car.yaw)
 sdata = lmodel.measure(pos)
 gm.update_map(pos, [61,-120,120,250], sdata)
 # Init PF
-pf = ParticleFilter((car.x, car.y, car.yaw), [61,-120,120,250], gm, 10)
+pf = ParticleFilter((car.x, car.y, car.yaw), [61,-120,120,250], gm, 100)
 
 def mouse_click(event, x, y, flags, param):
     global nav_pos, pos, path, m_dilate, way_points, controller
@@ -91,7 +91,7 @@ while(True):
     # Particle Filter
     pf.feed((car.v, car.w, car.dt), sdata)
     if ts > 10:
-        pf.resampling(sdata)
+        #pf.resampling(sdata)
         ts = 0
     ts += 1
     pmimg = pf.particle_list[5].gmap.adaptive_get_map_prob()

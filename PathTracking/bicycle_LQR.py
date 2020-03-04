@@ -1,9 +1,10 @@
 import numpy as np 
 
 class LQRControl:
-    def __init__(self, Q=np.eye(4), R=3*np.eye(1)):
+    def __init__(self, Q=np.eye(4), R=np.eye(1)):
         self.path = None
         self.Q = Q
+        self.Q[0,0] = 5
         self.R = R
         self.pe = 0
         self.pth_e = 0

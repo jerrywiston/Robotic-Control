@@ -61,10 +61,10 @@ class ParticleFilter:
         for i in range(size):
             self.particle_list.append(copy.deepcopy(p))
     
-    def particle_mapping(plist, sensor_data):
+    def particle_mapping(self, sensor_data):
         threads = []
-        for p in plist:
-            threads.append(threading.Thread(target=p.Mapping, args=(sensor_data,)))
+        for p in self.particle_list:
+            threads.append(threading.Thread(target=p.mapping, args=(sensor_data,)))
 
         for t in threads:
             t.start()
@@ -88,8 +88,8 @@ class ParticleFilter:
         field = np.zeros((self.size), dtype=float)
         for i in range(self.size):
             self.particle_list[i].sampling(control)
-            field[i] = self.particle_list[i].likelihood_field(sensor_data)
-            self.particle_list[i].mapping(sensor_data)
-
+            field[i] = 1#self.particle_list[i].likelihood_field(sensor_data)
+            #self.particle_list[i].mapping(sensor_data)
+        self.particle_mapping(sensor_data)
         self.weights = field / np.sum(field)
         #self.resampling(sensor_data)
