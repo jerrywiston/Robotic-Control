@@ -106,7 +106,7 @@ if __name__ == "__main__":
         for i in range(len(path)-1):
             #cv2.circle(img_, pos_int(path[i]), 2, (1.0,0.4,0.4), 1)
             cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 1)
-
+    
     img_ = cv2.flip(img,0)
     cv2.imshow("A* Test",img_)
     k = cv2.waitKey(0)
