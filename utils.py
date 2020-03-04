@@ -38,3 +38,6 @@ def EndPoint(pos, bot_param, sensor_data):
             [ pos[0]+sensor_data[i]*np.cos(np.deg2rad(theta)),
               pos[1]+sensor_data[i]*np.sin(np.deg2rad(theta))] )
     return pts_list
+
+def gaussian(x, mu, sig):
+    return 1./(np.sqrt(2.*np.pi)*sig)*np.exp(-np.power((x - mu)/sig, 2.)/2)

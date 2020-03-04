@@ -63,6 +63,7 @@ class KinematicModel:
         self.x = pos[0]
         self.y = pos[1]
         self.yaw = pos[2]
+        self.w = 0
         self.v = 0
         self.a = 0
         self.delta = 0
@@ -78,7 +79,8 @@ class KinematicModel:
 
         self.x += self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
         self.y += self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
-        self.yaw += np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)) * self.dt) 
+        self.w = np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)))
+        self.yaw += self.w  * self.dt
         self.yaw = self.yaw % 360
         self.record.append((self.x, self.y, self.yaw))
         self._compute_car_box()

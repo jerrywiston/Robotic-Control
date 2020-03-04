@@ -7,11 +7,29 @@ from utils import *
 class GridMap:
     def __init__(self, map_param, gsize=3.0):
         self.map_param = map_param
-        self.gmap = np.zeros((2000,2000),dtype=np.float)
+        self.map_size = (2000,2000)
+        self.gmap = np.zeros(self.map_size,dtype=np.float)
         self.gsize = gsize
         self.boundary = [9999,-9999,9999,-9999]
 
+    def get_grid_prob(self, pos, scale=False):
+        if scale:
+            pos_grid = (int(pos[0]/self.gsize), int(pos[1]/self.gsize))
+        else:
+            pos_grid = (int(pos[0]), int(pos[1]))
+        pos_grid = (int(pos[0]), int(pos[1]))
+
+        if pos_grid[0] >= self.map_size[1] or pos_grid[0] < 0:
+            return 0.5
+        if pos_grid[1] >= self.map_size[0] or pos_grid[1] < 0:
+            return 0.5
+        return self.gmap[pos_grid[1],pos_grid[0]]
+
     def get_map_prob(self, x0, x1, y0, y1):
+        if x0 < 0:
+            x0 = 0
+        if y0 < 0:
+            y0 = 0
         crop_gmap = self.gmap[y0:y1,x0:x1]
         return np.exp(crop_gmap) / (1.0 + np.exp(crop_gmap))
 
@@ -21,7 +39,7 @@ class GridMap:
             self.boundary[2], self.boundary[3] )
         return mimg
 
-    def _map_line(self, x0, x1, y0, y1, hit):
+    def map_line(self, x0, x1, y0, y1, hit):
         # Scale the position
         x0, x1 = int(x0/self.gsize), int(x1/self.gsize)
         y0, y1 = int(y0/self.gsize), int(y1/self.gsize)
@@ -57,7 +75,7 @@ class GridMap:
             hit = True
             if sensor_data[i] == bot_param[3]:
                 hit = False
-            self._map_line(
+            self.map_line(
                 int(bot_pos[0]), 
                 int(bot_pos[0]+sensor_data[i]*np.cos(np.deg2rad(theta))),
                 int(bot_pos[1]),
