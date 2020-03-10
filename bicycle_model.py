@@ -21,7 +21,7 @@ def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
 class KinematicModel:
     def __init__(self,
             v_range = 50,
-            a_range = 5,
+            a_range = 20,
             delta_range = 45,
             l = 40,     # distance between rear and front wheel
             d = 10,     # Wheel Distance
@@ -70,7 +70,6 @@ class KinematicModel:
         self.record = []
 
     def update(self):
-        self.v = self.v + self.a
         # Speed Constrain
         if self.v > self.v_range:
             self.v = self.v_range
@@ -82,6 +81,7 @@ class KinematicModel:
         self.w = np.rad2deg(self.v / self.l * np.tan(np.deg2rad(self.delta)))
         self.yaw += self.w  * self.dt
         self.yaw = self.yaw % 360
+        self.v = self.v + self.a*self.dt
         self.record.append((self.x, self.y, self.yaw))
         self._compute_car_box()
         

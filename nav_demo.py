@@ -12,6 +12,7 @@ from PathPlanning.cubic_spline import *
 from PathTracking.bicycle_pid import PidControl
 from PathTracking.bicycle_pure_pursuit import PurePursuitControl
 from PathTracking.bicycle_stanley import StanleyControl
+from PathTracking.bicycle_LQR import LQRControl
 #from PathTracking.wmr_pure_pursuit import PurePursuitControl
 # Other
 from SLAM.grid_map import GridMap
@@ -37,13 +38,15 @@ img = img.astype(float)/255.
 lmodel = LidarModel(m)
 #car = KinematicModel()
 car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
-control_type = 2
+control_type = 3
 if control_type == 0:
     controller = PidControl()
 elif control_type == 1:
     controller = PurePursuitControl(kp=0.7,Lfc=10)
 elif control_type == 2:
     controller = StanleyControl(kp=0.5)
+elif control_type == 3:
+    controller = LQRControl()
 else:
     controller = PurePursuitControl(kp=0.7,Lfc=10)
 
@@ -109,8 +112,8 @@ while(True):
         # Control
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 35 if end_dist > 20 else 0
-        next_a = 0.2*(target_v - car.v)
+        target_v = 35 if end_dist > 40 else 0
+        next_a = 1*(target_v - car.v)
 
         # Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta, "v":car.v, "l":car.l, "dt":car.dt}

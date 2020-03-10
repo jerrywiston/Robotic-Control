@@ -5,7 +5,7 @@ def path1():
     cy = [270 for ix in cx]
     cyaw = [0 for ix in cx]
     ccurv = [0 for ix in cx]
-    path = np.array([(cx[i],cy[i],cyaw[i],ccurv) for i in range(len(cx))])
+    path = np.array([(cx[i],cy[i],cyaw[i],ccurv[i]) for i in range(len(cx))])
     return path
 
 def path2(p1 = 80.0):
