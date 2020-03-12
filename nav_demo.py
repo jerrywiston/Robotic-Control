@@ -12,7 +12,7 @@ from PathPlanning.cubic_spline import *
 from PathTracking.bicycle_pid import PidControl
 from PathTracking.bicycle_pure_pursuit import PurePursuitControl
 from PathTracking.bicycle_stanley import StanleyControl
-from PathTracking.bicycle_LQR import LQRControl
+from PathTracking.bicycle_lqr import LQRControl
 #from PathTracking.wmr_pure_pursuit import PurePursuitControl
 # Other
 from SLAM.grid_map import GridMap

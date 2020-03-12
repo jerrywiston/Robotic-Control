@@ -8,7 +8,7 @@ class LQRControl:
         self.Q[1,1] = 1
         self.Q[2,2] = 1
         self.Q[3,3] = 1
-        self.R = R*1000
+        self.R = R*5000
         self.pe = 0
         self.pth_e = 0
 
@@ -80,7 +80,6 @@ class LQRControl:
             [ (e - self.pe) / dt],
             [ th_e],
             [ (th_e - self.pth_e) / dt]], dtype=np.float)
-        print(X.T)
         
         self.pe = e.copy()
         self.pth_e = th_e.copy()
@@ -89,7 +88,7 @@ class LQRControl:
         K = np.linalg.inv(B.T @ P @ B + self.R) @ B.T @ P @ A
         fb = np.rad2deg((-K @ X)[0, 0])
         fb = self._angle_norm(fb)
-        #print((-K @ X)[0, 0], fb)
+
         ff = np.rad2deg(np.arctan2(l*target[3], 1))
         next_delta = self._angle_norm(fb + ff)
         return next_delta, target
@@ -102,14 +101,14 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
     
     # Initialize Car
-    car = KinematicModel(l=0.5)
-    start = (50,265,0)
+    car = KinematicModel()
+    start = (50,300,0)
     car.init_state(start)
     controller = LQRControl()
     controller.set_path(path)
@@ -119,7 +118,7 @@ if __name__ == "__main__":
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 3 if end_dist > 40 else 0
+        target_v = 20 if end_dist > 30 else 0
         next_a = 1*(target_v - car.v)
 
         # Stanley Lateral Control
@@ -134,7 +133,7 @@ if __name__ == "__main__":
         img = car.render(img)
         img = cv2.flip(img, 0)
         cv2.imshow("LQR Control Test", img)
-        k = cv2.waitKey(0)
+        k = cv2.waitKey(1)
         if k == ord('r'):
             car.init_state(start)
         if k == 27:
