@@ -35,7 +35,7 @@ m_dilate = 1-cv2.dilate(1-m, np.ones((30,30))) # Configuration-Space
 img = img.astype(float)/255.
 
 # Lidar
-lmodel = LidarModel(m)
+lmodel = LidarModel(m, sensor_size=31, max_dist=250)
 #car = KinematicModel()
 car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
 control_type = 2
@@ -55,13 +55,13 @@ car.yaw = 0
         
 rrt = RRTStar(m_dilate)
 astar = AStar(m_dilate)
-gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=6)
+gm = GridMap([0.5, -0.5, 5.0, -5.0], gsize=4)
 # First Mapping
 pos = (car.x, car.y, car.yaw)
 sdata = lmodel.measure(pos)
-gm.update_map(pos, [61,-120,120,250], sdata)
+gm.update_map(pos, [31,-120,120,250], sdata)
 # Init PF
-pf = ParticleFilter((car.x, car.y, car.yaw), [61,-120,120,250], gm, 100)
+pf = ParticleFilter((car.x, car.y, car.yaw), [31,-120,120,250], gm, 30)
 
 def mouse_click(event, x, y, flags, param):
     global nav_pos, pos, path, m_dilate, way_points, controller
@@ -86,12 +86,12 @@ while(True):
     print("\rState: "+car.state_str(), "| Goal:", nav_pos, end="\t")
     pos = (car.x, car.y, car.yaw)
     sdata = lmodel.measure(pos)
-    plist = EndPoint(pos, [61,-120,120], sdata)
+    plist = EndPoint(pos, [31,-120,120], sdata)
 
     # Particle Filter
     pf.feed((car.v, car.w, car.dt), sdata)
     if ts > 10:
-        #pf.resampling(sdata)
+        pf.resampling()
         ts = 0
     ts += 1
     pmimg = pf.particle_list[5].gmap.adaptive_get_map_prob()
@@ -101,7 +101,7 @@ while(True):
     cv2.imshow("pmap", pmimg_)
     
     # Map
-    gm.update_map(pos, [61,-120,120,250], sdata)
+    gm.update_map(pos, [31,-120,120,250], sdata)
     mimg = gm.adaptive_get_map_prob()
     mimg = (255*mimg).astype(np.uint8)
     mimg = cv2.cvtColor(mimg, cv2.COLOR_GRAY2RGB)
@@ -119,7 +119,8 @@ while(True):
     #img = cv2.flip(img,0)
     if nav_pos is not None:
         cv2.circle(img_,nav_pos,5,(0.5,0.5,1.0),3)
-    cv2.circle(img_,(int(pf.particle_list[5].pos[0]),int(pf.particle_list[5].pos[1])),3,(0,0,1),2)
+    for i in range(len(pf.particle_list)):
+        cv2.circle(img_,(int(pf.particle_list[i].pos[0]),int(pf.particle_list[i].pos[1])),2,(0,0,1),1)
 
     if path is not None and not collision:
         for i in range(len(way_points)):
@@ -157,7 +158,7 @@ while(True):
             controller.set_path(path)
             collision_count = 0
 
-    img_ = car.render(img_)
+    #img_ = car.render(img_)
     img_ = cv2.flip(img_, 0)
 
     #Collision

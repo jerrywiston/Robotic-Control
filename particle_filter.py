@@ -12,7 +12,7 @@ class Particle:
         self.bot_param = bot_param
         self.gmap = gmap
 
-    def sampling(self, control, sig=[0.4,0.4,0.4]):
+    def sampling(self, control, sig=[0.3,0.3,0.3]):
         v, w, t = control
         self.pos[0] = self.pos[0] + v*np.cos(np.deg2rad(self.pos[2]))*t + random.gauss(0,sig[0])
         self.pos[1] = self.pos[1] + v*np.sin(np.deg2rad(self.pos[2]))*t + random.gauss(0,sig[1])
@@ -38,15 +38,15 @@ class Particle:
     def likelihood_field(self, sensor_data):
         p_hit = 0.9
         p_rand = 0.1
-        sig_hit = 3.0
-        q = 1
+        sig_hit = 6.0
+        q = 0
         plist = utils.EndPoint(self.pos, self.bot_param, sensor_data)
         for i in range(len(plist)):
             if sensor_data[i] > self.bot_param[3]-1 or sensor_data[i] < 1:
                 continue
-            dist = self.nearest_dist(plist[i][0], plist[i][1], 4, 0.2)
-            q = q * (p_hit*utils.gaussian(0,dist,sig_hit) + p_rand/self.bot_param[3])
-            #q += math.log(p_hit*utils.gaussian(0,dist,sig_hit) + p_rand/self.bot_param[3])
+            dist = self.nearest_dist(plist[i][0], plist[i][1], 2, 0.2)
+            #q = q * (p_hit*utils.gaussian(0,dist,sig_hit) + p_rand/self.bot_param[3])
+            q += math.log(p_hit*utils.gaussian(0,dist,sig_hit) + p_rand/self.bot_param[3])
         return q
 
     def mapping(self, sensor_data):
@@ -72,14 +72,11 @@ class ParticleFilter:
         for t in threads:
             t.join()
 
-    def resampling(self, sensor_data):
+    def resampling(self):
         map_rec = np.zeros((self.size))
         re_id = np.random.choice(self.size, self.size, p=list(self.weights))
         new_particle_list = []
         for i in range(self.size):
-            if map_rec[re_id[i]] == 0:
-                self.particle_list[re_id[i]].mapping(sensor_data)
-                map_rec[re_id[i]] = 1
             new_particle_list.append(copy.deepcopy(self.particle_list[re_id[i]]))
         self.particle_list = new_particle_list
         self.weights = np.ones((self.size), dtype=float) / float(self.size)
@@ -88,8 +85,19 @@ class ParticleFilter:
         field = np.zeros((self.size), dtype=float)
         for i in range(self.size):
             self.particle_list[i].sampling(control)
-            field[i] = 1#self.particle_list[i].likelihood_field(sensor_data)
+            field[i] = self.particle_list[i].likelihood_field(sensor_data)
             #self.particle_list[i].mapping(sensor_data)
         self.particle_mapping(sensor_data)
-        self.weights = field / np.sum(field)
-        #self.resampling(sensor_data)
+        #self.weights = field / np.sum(field)
+        # Calculate Weight
+        normalize_max = -9999
+        for i in range(self.size):
+            if(field[i] > normalize_max):
+                normalize_max = field[i]
+
+        tmp = 0
+        for i in range(self.size):
+            self.weights[i] = np.exp(field[i] - normalize_max)
+            tmp += self.weights[i]
+        self.weights /= tmp
+

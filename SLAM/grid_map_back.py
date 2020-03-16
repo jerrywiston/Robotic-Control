@@ -50,9 +50,12 @@ class GridMap:
         for i in range(len(rec)):
             if i < len(rec)-3 or not hit:
                 change_list1.append([rec[i][1],rec[i][0]])
+                #change = self.map_param[0]
             else:
                 change_list2.append([rec[i][1],rec[i][0]])
-            
+                #change = self.map_param[1]
+
+            #self.gmap[rec[i][1],rec[i][0]] += change
             if rec[i][0] < self.boundary[0]:
                 self.boundary[0] = rec[i][0]
             elif rec[i][0] > self.boundary[1]:
@@ -62,11 +65,10 @@ class GridMap:
             elif rec[i][1] > self.boundary[3]:
                 self.boundary[3] = rec[i][1]
             
-        c1 = np.array(change_list1).tolist()
-        c2 = np.array(change_list2).tolist()
-        #self.gmap[c1] += self.map_param[0]
-        #self.gmap[c2] += self.map_param[1]
-        return c1, c2
+        c1 = list(np.array(change_list1).T)
+        c2 = list(np.array(change_list2).T)
+        self.gmap[c1] += self.map_param[0]
+        self.gmap[c2] += self.map_param[1]
 
     def map_lineXX(self, x0, x1, y0, y1, hit):
         # Scale the position
@@ -98,25 +100,20 @@ class GridMap:
     
     def update_map(self, bot_pos, bot_param, sensor_data):
         inter = (bot_param[2] - bot_param[1]) / (bot_param[0]-1)
-        c1_list, c2_list = [], []
-        for i in range(bot_param[0]):
+        for i in range(10):
             if sensor_data[i] > bot_param[3] or sensor_data[i] < 1:
                 continue
             theta = bot_pos[2] + bot_param[1] + i*inter
             hit = True
             if sensor_data[i] == bot_param[3]:
                 hit = False
-            c1, c2 = self.map_line(
+            self.map_line(
                 int(bot_pos[0]), 
                 int(bot_pos[0]+sensor_data[i]*np.cos(np.deg2rad(theta))),
                 int(bot_pos[1]),
                 int(bot_pos[1]+sensor_data[i]*np.sin(np.deg2rad(theta))),
                 hit
             )
-            c1_list += c1
-            c2_list += c2
-        self.gmap[list(np.array(c1_list).T)] += self.map_param[0]
-        self.gmap[list(np.array(c2_list).T)] += self.map_param[1]
 
 if __name__ == "__main__":
     # Read Image

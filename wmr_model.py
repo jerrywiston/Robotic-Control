@@ -64,12 +64,12 @@ class KinematicModel:
         self.record = []
 
     def update(self):
-        self.v += self.a
+        self.v += self.a * self.dt
         # Control Constrain
         # Speed Constrain
         if self.v > self.v_range:
             self.v = self.v_range
-        elif self.v < -self.v_range:
+        elif self.v < -self.v_range: 
             self.v = -self.v_range
 
         # Motion

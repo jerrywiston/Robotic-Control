@@ -38,7 +38,7 @@ img = img.astype(float)/255.
 lmodel = LidarModel(m)
 #car = KinematicModel()
 car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
-control_type = 3
+control_type = 2
 if control_type == 0:
     controller = PidControl()
 elif control_type == 1:

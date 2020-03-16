@@ -39,9 +39,9 @@ class PidControl:
         ep = min_dist * np.sin(ang)
         self.acc_ep += dt*ep
         diff_ep = (ep - self.last_ep) / dt
-        next_delta = self.kp*ep + self.ki*self.acc_ep + self.kd*diff_ep
+        next_w = self.kp*ep + self.ki*self.acc_ep + self.kd*diff_ep
         self.last_ep = ep
-        return next_delta, self.path[min_idx]
+        return next_w, self.path[min_idx]
 
 if __name__ == "__main__":
     import cv2
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     from wmr_model import KinematicModel
 
     # Path
-    path = path_generator.path2()
+    path = path_generator.path1()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -61,14 +61,15 @@ if __name__ == "__main__":
     car.init_state((50,300,0))
     controller = PidControl()
     controller.set_path(path)
-
+    cv2.imshow("demo", img_path)
+    cv2.waitKey(0)
     while(True):
         print("\rState: "+car.state_str(), end="\t")
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 10 else 0
-        next_a = 0.1*(target_v - car.v)
+        target_v = 20 if end_dist > 40 else 0
+        next_a = (target_v - car.v)
 
         # PID Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "dt":car.dt}
