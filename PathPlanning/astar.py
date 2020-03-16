@@ -23,14 +23,14 @@ class AStar():
         self.initialize()
         self.queue.append(start)
         self.parent[start] = None
-        self.h[start] = 0
-        self.g[start] = self._distance(start, goal)
+        self.g[start] = 0
+        self.h[start] = self._distance(start, goal)
         node_goal = None
         while(1):
             min_dist = 99999
             min_id = -1
             for i, node in enumerate(self.queue):
-                f = self.h[node] + self.g[node]
+                f = self.g[node] + self.h[node]
                 if f < min_dist:
                     min_dist = f
                     min_id = i
@@ -49,11 +49,11 @@ class AStar():
                 if pn not in self.parent:
                     self.queue.append(pn)
                     self.parent[pn] = p
-                    self.h[pn] = self.h[p] + inter
-                    self.g[pn] = self._distance(pn,goal)
-                elif self.h[pn]>self.h[p] + inter:
+                    self.g[pn] = self.g[p] + inter
+                    self.h[pn] = self._distance(pn,goal)
+                elif self.g[pn]>self.g[p] + inter:
                     self.parent[pn] = p
-                    self.h[pn] = self.h[p] + inter
+                    self.g[pn] = self.g[p] + inter
             
             if img is not None:
                 cv2.circle(img,(start[0],start[1]),5,(0,0,1),3)
