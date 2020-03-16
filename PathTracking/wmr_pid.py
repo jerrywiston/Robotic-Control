@@ -51,7 +51,7 @@ if __name__ == "__main__":
     from wmr_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -62,19 +62,17 @@ if __name__ == "__main__":
     controller = PidControl()
     controller.set_path(path)
     cv2.imshow("demo", img_path)
-    cv2.waitKey(0)
     while(True):
         print("\rState: "+car.state_str(), end="\t")
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 40 else 0
-        next_a = (target_v - car.v)
+        next_v = 20 if end_dist > 10 else 0
 
         # PID Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "dt":car.dt}
         next_w, target = controller.feedback(state)
-        car.control(next_a, next_w)
+        car.control(next_v, next_w)
         car.update()
 
         # Update State & Render

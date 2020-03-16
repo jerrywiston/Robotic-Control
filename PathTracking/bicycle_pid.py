@@ -68,8 +68,8 @@ if __name__ == "__main__":
         
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 10 else 0
-        next_a = 0.1*(target_v - car.v)
+        target_v = 20 if end_dist > 30 else 0
+        next_a = (target_v - car.v)
 
         # PID Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "dt":car.dt}

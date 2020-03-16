@@ -64,14 +64,6 @@ class KinematicModel:
         self.record = []
 
     def update(self):
-        self.v += self.a * self.dt
-        # Control Constrain
-        # Speed Constrain
-        if self.v > self.v_range:
-            self.v = self.v_range
-        elif self.v < -self.v_range: 
-            self.v = -self.v_range
-
         # Motion
         self.x += self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
         self.y += self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
@@ -87,15 +79,15 @@ class KinematicModel:
         self.yaw = self.yaw % 360
         self.record.pop()
 
-    def control(self,a,w):
-        self.a = a
+    def control(self,v,w):
+        self.v = v
         self.w = w
 
         # Control Constrain
-        if self.a > self.a_range:
-            self.a = self.a_range
-        elif self.a < -self.a_range:
-            self.a = -self.a_range
+        if self.v > self.v_range:
+            self.v = self.v_range
+        elif self.v < -self.v_range:
+            self.v = -self.v_range
         if self.w > self.w_range:
             self.w = self.w_range
         elif self.w < -self.w_range:

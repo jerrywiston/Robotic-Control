@@ -40,7 +40,6 @@ class StanleyControl:
             theta_e -= 360
         err_vec = np.array([front_x - target[0], front_y - target[1]])
         path_vec = np.array([np.cos(np.deg2rad(target[2]+90)), np.sin(np.deg2rad(target[2]+90))])
-        #path_vec = np.array([np.cos(np.deg2rad(yaw+90)), np.sin(np.deg2rad(yaw+90))])
         e = err_vec.dot(path_vec)
         theta_d = np.rad2deg(np.arctan2(-self.kp * e, vf))
         next_delta = theta_e + theta_d
@@ -71,7 +70,7 @@ if __name__ == "__main__":
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 40 else 0
+        target_v = 20 if end_dist > 30 else 0
         next_a = 1*(target_v - car.v)
 
         # Stanley Lateral Control

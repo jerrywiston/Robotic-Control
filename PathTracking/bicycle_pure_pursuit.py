@@ -70,7 +70,7 @@ if __name__ == "__main__":
         # ================= Control Algorithm ================= 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 20 if end_dist > 40 else 0
+        target_v = 20 if end_dist > 30 else 0
         next_a = 1*(target_v - car.v)
 
         # Pure Pursuit Lateral Control
