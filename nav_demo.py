@@ -105,7 +105,7 @@ def main():
         print("\rState: "+car.state_str(), "| Goal:", nav_pos, end="\t")
         
         img_ = img.copy()
-        if path is not None:
+        if path is not None and collision_count == 0:
             # Longitude P-Control
             end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
             target_v = 35 if end_dist > 40 else 0
