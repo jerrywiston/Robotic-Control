@@ -19,6 +19,8 @@ class AStar():
         return d
 
     def planning(self, start=(100,200), goal=(375,520), inter=10, img=None):
+        start = (int(start[0]), int(start[1]))
+        goal = (int(goal[0]), int(goal[1]))
         # Initialize 
         self.initialize()
         self.queue.append(start)

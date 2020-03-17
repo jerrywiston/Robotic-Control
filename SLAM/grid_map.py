@@ -115,8 +115,8 @@ class GridMap:
             )
             c1_list += c1
             c2_list += c2
-        self.gmap[list(np.array(c1_list).T)] += self.map_param[0]
-        self.gmap[list(np.array(c2_list).T)] += self.map_param[1]
+        self.gmap[tuple(np.array(c1_list).T)] += self.map_param[0]
+        self.gmap[tuple(np.array(c2_list).T)] += self.map_param[1]
 
 if __name__ == "__main__":
     # Read Image
