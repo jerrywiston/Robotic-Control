@@ -89,6 +89,8 @@ class RRTStar():
 
             # Re-Wire
             for n in nlist:
+                if n == self.ntree[new_node]:
+                    continue
                 cost = self.cost[new_node] + self._distance(n, new_node)
                 if cost < self.cost[n]:
                     self.ntree[n] = new_node
