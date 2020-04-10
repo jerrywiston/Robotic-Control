@@ -76,6 +76,7 @@ class RRT():
                 for n in self.ntree:
                     if self.ntree[n] is None:
                         continue
+                    print(n)
                     node = self.ntree[n]
                     cv2.line(img, (int(n[0]), int(n[1])), (int(node[0]), int(node[1])), (1,0,0), 1)
                 # Draw Image
