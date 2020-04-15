@@ -73,7 +73,6 @@ class EkfSLAM:
             temp = K @ H
             self.P = (np.eyes(temp.shape[0]) - temp) @ P_pre
         
-
 def main():
     window_name = "EKF SLAM Demo"
     cv2.namedWindow(window_name)
@@ -103,6 +102,7 @@ def main():
             obs.append((r,phi))
         
         slam.ekf_prediction(car.v, car.w, car.dt)
+        print(slam.x[0:3])
 
         # Draw Landmark
         for lm in landmarks:
@@ -121,7 +121,7 @@ def main():
         y_noise = np.random.randn() * Q_sim[1, 1] ** 0.5
         yaw_noise = np.random.randn() * Q_sim[2, 2] ** 0.5
         # Keyboard
-        k = cv2.waitKey(0)
+        k = cv2.waitKey(1)
         car.x += x_noise
         car.y += y_noise
         car.yaw += yaw_noise
